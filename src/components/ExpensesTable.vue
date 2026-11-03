@@ -82,7 +82,7 @@ function formatDate(value) {
 }
 .expenses-table th {
   font-size: 14px;
-  color: #94A6BE;
+  color: #999999;
   font-weight: 500;
   padding-bottom: 14px;
   border-bottom: 1px solid #EAEDF6;
@@ -94,14 +94,11 @@ function formatDate(value) {
   border-bottom: 1px solid #EAEDF6;
 }
 .category-tag {
-  background: #EAEEF6;
-  color: #565EEF;
+  
+  color: #000000;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-}
-.amount-cell {
-  font-weight: 600;
 }
 </style>

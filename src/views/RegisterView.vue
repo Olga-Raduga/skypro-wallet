@@ -1,170 +1,164 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const submitted = ref(false)
-const notice = ref('')
-
-const emailIsValid = computed(() => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)
-})
-
-const formIsValid = computed(() => {
-  return (
-    emailIsValid.value &&
-    password.value.length > 0 &&
-    confirmPassword.value.length > 0 &&
-    password.value === confirmPassword.value
-  )
-})
-
-const formError = computed(() => {
-  if (!submitted.value) {
-    return ''
-  }
-
-  if (!email.value) {
-    return 'Введите email.'
-  }
-  if (!emailIsValid.value) {
-    return 'Введите корректный email.'
-  }
-
-  if (!password.value) {
-    return 'Введите пароль.'
-  }
-
-  if (!confirmPassword.value) {
-    return 'Повторите пароль.'
-  }
-
-  if (password.value !== confirmPassword.value) {
-    return 'Пароли не совпадают.'
-  }
-
-  return ''
-})
+const router = useRouter()
 
 function handleRegister() {
-  submitted.value = true
-  notice.value = ''
-
-  if (!formIsValid.value) {
-    return
-  }
-
-  notice.value = 'Подключение регистрации будет добавлено на следующем этапе.'
+  router.push('/login')
 }
 </script>
 
 <template>
-  <main class="auth-page">
+  <div class="auth-page">
     <section class="auth-card">
       <h1>Регистрация</h1>
-
       <form
         class="auth-form"
         novalidate
         @submit.prevent="handleRegister"
       >
-        <div class="auth-form__block">
-          <label
-            for="registerEmail"
-            class="auth-form__label"
-          >
-            Email
-          </label>
-          <input
-            id="registerEmail"
-            v-model.trim="email"
-            :class="{ 'auth-input_invalid': submitted && !emailIsValid }"
-            :aria-invalid="submitted && !emailIsValid"
-            type="email"
-            name="email"
-            autocomplete="email"
-            placeholder="Введите ваш email"
-          >
-        </div>
-        <div class="auth-form__block">
-          <label
-            for="registerPassword"
-            class="auth-form__label"
-          >
-            Пароль
-          </label>
-          <input
-            id="registerPassword"
-            v-model="password"
-            :class="{ 'auth-input_invalid': submitted && !password }"
-            :aria-invalid="submitted && !password"
-            type="password"
-            name="password"
-            autocomplete="new-password"
-            placeholder="Введите пароль"
-          >
-        </div>
+        <input
+          id="registerEmail"       
+          type="text"
+          name="email"
+          autocomplete="email"
+          placeholder="Эл. почта"
+        >
 
-        <div class="auth-form__block">
-          <label
-            for="confirmPassword"
-            class="auth-form__label"
-          >
-            Подтверждение пароля
-          </label>
-          <input
-            id="confirmPassword"
-            v-model="confirmPassword"
-            :class="{
-              'auth-input_invalid':
-                submitted &&
-                (!confirmPassword || password !== confirmPassword),
-            }"
-            :aria-invalid="
-              submitted &&
-                (!confirmPassword || password !== confirmPassword)
-            "
-            type="password"
-            name="confirmPassword"
-            autocomplete="new-password"
-            placeholder="Повторите пароль"
-          >
-        </div>
-
+        <input
+          id="registerPassword"
+          type="password"
+          name="password"
+          autocomplete="new-password"
+          placeholder="Пароль"
+        >
+       
         <button
           type="submit"
           class="auth-btn"
-          :class="{ 'auth-btn--invalid': submitted && !formIsValid }"
         >
           Зарегистрироваться
         </button>
-
-        
-
-        <p
-          v-if="formError"
-          class="auth-error"
-          role="alert"
-        >
-          {{ formError }}
-        </p>
-
-        <p
-          v-if="notice"
-          role="status"
-        >
-          {{ notice }}
-        </p>
       </form>
-      
-      <RouterLink
-        to="/login"
-        class="auth-link"
-      >
-        Уже есть аккаунт? Войти
-      </RouterLink>
+
+      <p class="auth-switch">
+        Уже есть аккаунт?
+        <RouterLink
+          to="/login"
+          class="auth-link"
+        >
+          Войдите здесь
+        </RouterLink>
+      </p>
     </section>
-  </main>
+  </div>      
 </template>
+
+<style scoped>
+.auth-page {
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+}
+.auth-card {
+  width: min(100%, 320px);
+  padding: 28px 24px;
+  border: 1px solid #d4dbe5;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 3%);
+  text-align: center;
+}
+.auth-card h1 {
+  margin: 0 0 24px;
+  color: #222;
+  font-size: 20px;
+  font-weight: 600;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.auth-form__block {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: left;
+}
+.auth-form__label {
+  color: #94a6be;
+  font-size: 13px;
+  font-weight: 500;
+}
+.auth-form input {
+  width: 100%;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid #d4dbe5;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-size: 13px;
+}
+.auth-form input:focus {
+  border-color: #793fed;
+}
+.auth-form input.auth-input_invalid {
+  border-color: #e55666;
+  background: #fff5f5;
+}
+.auth-error {
+  margin: 0;
+  color: #d94352;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+}
+.auth-notice {
+  margin: 12px 0 0;
+  color: #596579;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.auth-btn {
+  width: 100%;
+  height: 36px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 5px;
+  background: #793fed;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+.auth-btn:hover {
+  background: #632cd4;
+}
+.auth-btn--invalid {
+  background: #aeb4bd;
+}
+.auth-switch {
+  display: inline-block;
+  margin-top: 12px;
+  color: #999999;
+  font-size: 12px;
+  text-decoration: none;
+}
+.auth-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #999999;
+  font-size: 12px;
+  text-decoration: none;
+}
+.auth-link:hover {
+  text-decoration: underline;
+}
+</style>

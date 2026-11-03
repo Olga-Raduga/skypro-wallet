@@ -3,6 +3,15 @@ import { ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
 
+import productsIcon from '../assets/products.png'
+import autoIcon from '../assets/auto.png'
+import housingIcon from '../assets/housing.png'
+import entertainmentIcon from '../assets/entertainment.png'
+import educationIcon from '../assets/education.png'
+import otherIcon from '../assets/other.png'
+
+
+// Статичный массив примеров расходов на первый спринт
 const expenses = ref([
   {
     id: 1,
@@ -33,52 +42,23 @@ const expenses = ref([
     amount: 4310,
   },
 ])
+
+// Переменные полей формы (оставляем только для v-model)
 const description = ref('')
 const category = ref('Продукты')
 const date = ref('')
 const amount = ref('')
-const formError = ref('')
-const notice = ref('')
-let nextExpenseId = expenses.value.length + 1
+
+// Переделываем массив в объекты с именами и путями к иконкам
 const categoriesList = [
-  'Продукты',
-  'Одежда',
-  'Транспорт',
-  'Еда',
-  'Развлечения',
-  'Образование',
-  'Другое',
+{ name: 'Продукты', icon: productsIcon },
+{ name: 'Транспорт', icon: autoIcon },
+{ name: 'Жильё', icon: housingIcon },
+{ name: 'Развлечения', icon: entertainmentIcon },
+{ name: 'Образование', icon: educationIcon },
+{ name: 'Другое', icon: otherIcon },
 ]
-function handleAddExpense() {
-  formError.value = ''
-  notice.value = ''
-  const numericAmount = Number(amount.value)
-  if (!description.value.trim()) {
-    formError.value = 'Введите описание расхода.'
-    return
-  }
-  if (!date.value) {
-    formError.value = 'Выберите дату.'
-    return
-  }
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    formError.value = 'Введите сумму больше нуля.'
-    return
-  }
-  expenses.value.unshift({
-    id: nextExpenseId,
-    title: description.value.trim(),
-    category: category.value,
-    date: date.value,
-    amount: numericAmount,
-  })
-  nextExpenseId += 1
-  description.value = ''
-  category.value = 'Продукты'
-  date.value = ''
-  amount.value = ''
-  notice.value = 'Расход добавлен.'
-}
+
 </script>
 
 <template>
@@ -95,7 +75,7 @@ function handleAddExpense() {
             <form
               class="expense-form"
               novalidate
-              @submit.prevent="handleAddExpense"
+              @submit.prevent
             >
               <div class="form-group">
                 <label for="expDesc">Описание</label>
@@ -103,26 +83,33 @@ function handleAddExpense() {
                   id="expDesc"
                   v-model.trim="description"
                   type="text"
-                  placeholder="Например, Кофе"
+                  placeholder="Введите описание"
                 >
               </div>
               <fieldset class="expense-form__categories">
                 <legend>Категория</legend>
                 <div class="categories-grid">
                   <label
-                    v-for="cat in categoriesList"
-                    :key="cat"
+                    v-for="item in categoriesList"
+                    :key="item.name"
                     class="category-label"
-                    :class="{ 'category-label_active': category === cat }"
+                    :class="{ 'category-label_active': category === item.name }"
                   >
                     <input
                       v-model="category"
                       type="radio"
                       name="category"
-                      :value="cat"
+                      :value="item.name"
                       class="hidden-radio"
                     >
-                    <span>{{ cat }}</span>
+                    <!-- Динамически выводим картинку-иконку из Figma по ТЗ -->
+                    <img
+                      class="category-icon"
+                      :src="item.icon"
+                      alt=""
+                      aria-hidden="true"
+                    >
+                    <span>{{ item.name }}</span>
                   </label>
                 </div>
               </fieldset>
@@ -142,23 +129,12 @@ function handleAddExpense() {
                   type="number"
                   min="0.01"
                   step="0.01"
-                  placeholder="0"
+                  placeholder="Введите сумму"
                 >
               </div>
-              <p
-                v-if="formError"
-                class="form-error"
-                role="alert"
-              >
-                {{ formError }}
-              </p>
-              <p
-                v-if="notice"
-                class="form-notice"
-                role="status"
-              >
-                {{ notice }}
-              </p>
+              
+              <!-- Вывод ошибок и notice полностью удален -->
+
               <button
                 type="submit"
                 class="submit-btn"
@@ -227,16 +203,24 @@ function handleAddExpense() {
 .expense-form__categories legend {
   margin-bottom: 8px;
   padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
 }
 .expense-form input[type='number'] {
   display: block;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid #dedee5;
+  padding: 0 14px;
+  height: 44px;
+  border: 1px solid #D4DBE5;
   border-radius: 8px;
   font: inherit;
+  outline: none;
+}
+.expense-form input[type='number']:focus {
+  border-color: #793FED;
 }
 .form-group {
   display: flex;
@@ -261,20 +245,22 @@ function handleAddExpense() {
 .form-group input:focus {
   border-color: #793FED;
 }
-
 .categories-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 .category-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* Небольшой отступ между картинкой и текстом */
   padding: 8px 14px;
   border: 1px solid #D4DBE5;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  color: #94A6BE;
+  color: #000000;
   transition: all 0.2s;
 }
 .category-label_active {
@@ -282,6 +268,15 @@ function handleAddExpense() {
   color: #FFFFFF;
   border-color: #793FED;
 }
+
+/* Стили для иконки категории по ТЗ наставника */
+.category-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  
+}
+
 .hidden-radio {
   display: none;
 }
