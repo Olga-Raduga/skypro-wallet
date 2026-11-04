@@ -3,12 +3,9 @@ import { ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
 
-import productsIcon from '../assets/products.png'
-import autoIcon from '../assets/auto.png'
-import housingIcon from '../assets/housing.png'
-import entertainmentIcon from '../assets/entertainment.png'
-import educationIcon from '../assets/education.png'
-import otherIcon from '../assets/other.png'
+import IconCategory from '../components/IconCategory.vue'
+
+
 
 
 // Статичный массив примеров расходов на первый спринт
@@ -37,7 +34,7 @@ const expenses = ref([
   {
     id: 4,
     title: 'Купер Маркет',
-    category: 'Продукты',
+    category: 'Еда',
     date: '2026-07-04',
     amount: 4310,
   },
@@ -45,18 +42,18 @@ const expenses = ref([
 
 // Переменные полей формы (оставляем только для v-model)
 const description = ref('')
-const category = ref('Продукты')
+const category = ref('Еда')
 const date = ref('')
 const amount = ref('')
 
 // Переделываем массив в объекты с именами и путями к иконкам
 const categoriesList = [
-{ name: 'Продукты', icon: productsIcon },
-{ name: 'Транспорт', icon: autoIcon },
-{ name: 'Жильё', icon: housingIcon },
-{ name: 'Развлечения', icon: entertainmentIcon },
-{ name: 'Образование', icon: educationIcon },
-{ name: 'Другое', icon: otherIcon },
+  { name: 'Еда',          icon: 'food' },
+  { name: 'Транспорт',    icon: 'transport' },
+  { name: 'Жильё',        icon: 'housing' },
+  { name: 'Развлечения',  icon: 'entertainment' },
+  { name: 'Образование',  icon: 'education' },
+  { name: 'Другое',       icon: 'other' },
 ]
 
 </script>
@@ -65,6 +62,8 @@ const categoriesList = [
   <div class="page-wrapper">
     <HeaderView />
     <main class="main-content">
+      <h1 class="page-title">Мои расходы</h1>
+
       <div class="content-layout">
         <div class="layout-left">
           <ExpensesTable :expenses="expenses" />
@@ -102,13 +101,8 @@ const categoriesList = [
                       :value="item.name"
                       class="hidden-radio"
                     >
-                    <!-- Динамически выводим картинку-иконку из Figma по ТЗ -->
-                    <img
-                      class="category-icon"
-                      :src="item.icon"
-                      alt=""
-                      aria-hidden="true"
-                    >
+                    <!-- Динамически выводим картинку-иконку -->
+                    <IconCategory :name="item.icon" class="category-icon" />
                     <span>{{ item.name }}</span>
                   </label>
                 </div>
@@ -161,6 +155,12 @@ const categoriesList = [
   padding: 40px;
   flex-grow: 1;
 }
+.page-title {
+  margin: 0 0 24px;
+  color: #1f2430;
+  font-size: 28px;
+  font-weight: 600;
+}
 .content-layout {
   display: flex;
   gap: 30px;
@@ -183,7 +183,7 @@ const categoriesList = [
   padding: 24px;
 }
 .form-title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: left;
@@ -203,7 +203,7 @@ const categoriesList = [
 .expense-form__categories legend {
   margin-bottom: 8px;
   padding: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #000000;
 }
@@ -214,7 +214,9 @@ const categoriesList = [
   min-width: 0;
   padding: 0 14px;
   height: 44px;
-  border: 1px solid #D4DBE5;
+  border: 1px solid #F1EBFD;
+  background-color: #F1EBFD;
+  font-size: 12px;
   border-radius: 8px;
   font: inherit;
   outline: none;
@@ -228,7 +230,7 @@ const categoriesList = [
   gap: 8px;
 }
 .form-group label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #000000;
 }
@@ -238,7 +240,7 @@ const categoriesList = [
   border: 1px solid #D4DBE5;
   border-radius: 8px;
   outline: none;
-  font-size: 14px;
+  font-size: 12px;
   width: 100%;
   background: transparent;
 }
@@ -257,23 +259,24 @@ const categoriesList = [
   padding: 8px 14px;
   border: 1px solid #D4DBE5;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   color: #000000;
   transition: all 0.2s;
 }
 .category-label_active {
-  background-color: #793FED;
-  color: #FFFFFF;
-  border-color: #793FED;
+  background-color: #F1EBFD;
+  color: #7334EA;
+  border-color: #F1EBFD;
 }
 
 /* Стили для иконки категории по ТЗ наставника */
 .category-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  transition: color 0.2s;
   
 }
 
@@ -283,16 +286,16 @@ const categoriesList = [
 .submit-btn {
   height: 44px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: #793FED;
   color: #FFFFFF;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 10px;
 }
 .submit-btn:hover {
-  background-color: #632cd4;
+  background-color: #7334EA;
 }
 </style>

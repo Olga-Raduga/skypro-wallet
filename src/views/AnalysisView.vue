@@ -2,15 +2,22 @@
 <script setup>
 import HeaderView from '../components/HeaderView.vue'
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-// Июль 2026 начинается в среду: перед первым числом два пустых места.
-// Даты и цифры ниже нужны только для статичной верстки.
-const calendarDays = [
-  null,
-  null,
-  ...Array.from({ length: 31 }, (_, index) => index + 1),
-  null,
-  null,
+// Демо-данные: два месяца подряд, как на макете.
+const months = [
+  {
+    title: 'Июль 2026',
+    // первое число — среда (Пн=0, Вт=1, Ср=2) → 2 пустых
+    leadingEmpty: 2,
+    days: 31,
+  },
+  {
+    title: 'Август 2026',
+    // август начинается в субботу (Пн=0 … Сб=5) → 5 пустых
+    leadingEmpty: 5,
+    days: 31,
+  },
 ]
+
 const selectedDay = 15
 // Демонстрационные данные для отображения диаграммы.
 const chartItems = [
@@ -65,19 +72,11 @@ const chartItems = [
           <header class="panel-header">
             <div>
               <h2 class="panel-title">Период</h2>
-              <p class="panel-subtitle">Июль 2026</p>
-            </div>
-            <div
-              class="month-arrows"
-              aria-hidden="true"
-            >
-              <span>‹</span>
-              <span>›</span>
             </div>
           </header>
+          <!-- Сетка дней недели (фиксированная, не скроллится) -->
           <div
-            class="calendar-grid"
-            aria-label="Календарь за июль 2026"
+            class="calendar-weekdays"
           >
             <span
               v-for="dayName in weekDays"
@@ -86,20 +85,36 @@ const chartItems = [
             >
               {{ dayName }}
             </span>
+          </div> 
+
+          <!-- Прокручиваемый блок с месяцами -->
+          <div class="calendar-scroll">
             <div
-              v-for="(day, index) in calendarDays"
-              :key="index"
-              class="calendar-day"
-              :class="{
-                'calendar-day--empty': day === null,
-                'calendar-day--selected': day === selectedDay,
-              }"
+              v-for="month in months"
+              :key="month.title"
+              class="calendar-month"
             >
-              <span v-if="day !== null">
-                {{ day }}
-              </span>
+              <p class="month-title">{{ month.title }}</p>
+
+              <div class="calendar-grid">
+                <span
+                  v-for="i in month.leadingEmpty"
+                  :key="`empty-${month.title}-${i}`"
+                  class="calendar-day calendar-day--empty"
+                ></span>
+
+                <span
+                  v-for="d in month.days"
+                  :key="`day-${month.title}-${d}`"
+                  class="calendar-day"
+                  :class="{ 'calendar-day--selected': d === selectedDay }"
+                >
+                  {{ d }}
+                </span>
+              </div>
             </div>
           </div>
+          
           <div class="calendar-footer">
             <span class="calendar-footer__label">Пример периода</span>
             <strong>15 июля 2026</strong>
@@ -109,7 +124,7 @@ const chartItems = [
           <header class="panel-header">
             <div>
               <h2 class="panel-title">Расходы по категориям</h2>
-              <p class="panel-subtitle">Июль 2026</p>
+              <p class="panel-subtitle">Расходы за июль 2026</p>
             </div>
             <div class="total-block">
               <span class="total-block__label">Всего расходов</span>
@@ -182,18 +197,18 @@ const chartItems = [
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 .panel-title {
   margin: 0;
   color: #1f2430;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
 }
 .panel-subtitle {
   margin: 8px 0 0;
   color: #8993a5;
-  font-size: 14px;
+  font-size: 12px;
 }
 .month-arrows {
   display: flex;
@@ -210,33 +225,85 @@ const chartItems = [
   border: 1px solid #e2e6ee;
   border-radius: 8px;
 }
+
+/* --- КАЛЕНДАРЬ --- */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf0f5;   
+}
+.weekday {
+  padding: 10px 0;
+  color: #8993a5;
+  font-size: 12px;
+  text-align: center;
+}
+/* Прокручиваемая область с месяцами */
+
+.calendar-scroll {
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 6px; /* место под скроллбар */
+  scrollbar-width: thin;
+  scrollbar-color: #d4d9e4 transparent;
+}
+
+.calendar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.calendar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-scroll::-webkit-scrollbar-thumb {
+  background: #d4d9e4;
+  border-radius: 3px;
+}
+
+.calendar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #b8bfd0;
+}
+
+.month-title {
+  margin: 16px 0 8px;
+  padding-left: 4px;
+  color: #1f2430;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.calendar-month:first-child .month-title {
+  margin-top: 4px;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
-.weekday {
-  padding: 8px 0;
-  color: #8993a5;
-  font-size: 12px;
-  text-align: center;
-}
+
 .calendar-day {
   display: grid;
-  min-height: 40px;
+  aspect-ratio: 1 / 1;   /* круг ровный независимо от ширины */
   place-items: center;
-  border: 1px solid #edf0f5;
-  border-radius: 8px;
+  border: none;
+  border-radius: 50%;
   color: #333b4a;
-  font-size: 13px;
+  font-size: 12px;
+  cursor: default;
 }
 .calendar-day--empty {
-  border-color: transparent;
+  background: transparent;
 }
 .calendar-day--selected {
-  border-color: #793fed;
-  background: #793fed;
-  color: #fff;
+  background: #F1EBFD;
+  color: #7334EA;
+  font-weight: 600;
 }
 .calendar-footer {
   display: flex;
@@ -254,6 +321,7 @@ const chartItems = [
   color: #333b4a;
   font-weight: 500;
 }
+/* --- ГРАФИК --- */
 .total-block {
   display: flex;
   flex-direction: column;
@@ -340,9 +408,6 @@ const chartItems = [
   }
   .panel-header {
     flex-wrap: wrap;
-  }
-  .calendar-day {
-    min-height: 36px;
   }
 }
 </style>

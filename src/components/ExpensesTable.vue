@@ -28,7 +28,7 @@ function formatDate(value) {
     <table class="expenses-table">
       <thead>
         <tr>
-          <th>Название</th>
+          <th>Описание</th>
           <th>Категория</th>
           <th>Дата</th>
           <th>Сумма</th>
@@ -55,6 +55,26 @@ function formatDate(value) {
           <td class="amount-cell">
             {{ formatAmount(item.amount) }}
           </td>
+          <td class="delete-cell">
+            <button type="button" class="delete-button" aria-label="Удалить расход">
+              <svg
+                viewBox="0 0 16 16"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M2 4h12" />
+                <path d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+                <path d="M3.5 4l.7 9.1a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4" />
+                <path d="M6.5 7v4" />
+                <path d="M9.5 7v4" />
+              </svg>
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -70,7 +90,7 @@ function formatDate(value) {
   width: 100%;
 }
 .table-title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: left;
@@ -81,7 +101,7 @@ function formatDate(value) {
   text-align: left;
 }
 .expenses-table th {
-  font-size: 14px;
+  font-size: 12px;
   color: #999999;
   font-weight: 500;
   padding-bottom: 14px;
@@ -89,7 +109,7 @@ function formatDate(value) {
 }
 .expenses-table td {
   padding: 14px 0;
-  font-size: 14px;
+  font-size: 12px;
   color: #000000;
   border-bottom: 1px solid #EAEDF6;
 }
@@ -100,5 +120,31 @@ function formatDate(value) {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
+}
+/* Колонка для корзины */
+.delete-col {
+  width: 40px;
+}
+
+.delete-cell {
+  text-align: right;
+}
+
+.delete-button {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #999999;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.delete-button:hover {
+  color: #7334EA;
+  background-color: #F3EEFE;
 }
 </style>

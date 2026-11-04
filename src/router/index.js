@@ -3,6 +3,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ExpensesView from '../views/ExpensesView.vue'
 import AnalysisView from '../views/AnalysisView.vue'
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [

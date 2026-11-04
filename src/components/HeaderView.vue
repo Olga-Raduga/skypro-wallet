@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.svg'
 
 const router = useRouter()
 function handleLogout() {
@@ -74,19 +74,22 @@ function handleLogout() {
 }
 .header__link {
   font-size: 14px;
-  font-weight: 500;
-  color: #94A6BE;
+  font-weight: 400;
+  color: #000000;
   text-decoration: none;
   transition: color 0.2s;
+  padding-bottom: 4px; /* Отступ снизу для линии подчёркивания */
+  border-bottom: 2px solid transparent; /* Резервируем место под линию */
+  transition: all 0.2s ease;
 }
 .header__link:hover, .header__link_active {
-  color: #793FED; 
+  color: #7334EA; 
+  border-bottom-color: #7334EA; 
 }
 .header__logout-btn {
   background: transparent;
-  color: #94A6BE;
-  border: 1px solid #D4DBE5;
-  border-radius: 6px;
+  color: #000000;
+  border: none;
   padding: 6px 16px;
   font-size: 14px;
   font-weight: 500;
