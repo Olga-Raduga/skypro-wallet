@@ -7,6 +7,7 @@ import IconCategory from '../components/IconCategory.vue'
 import {
   addTransaction,
   getTransactions,
+  getTransactionsByPeriod,
 } from '../api/transactions.js'
 
 const expenses = ref([])
@@ -21,6 +22,10 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const fieldErrors = ref({})
+
+const periodStart = ref('')
+const periodEnd = ref('')
+const periodError = ref('')
 
 // Переделываем массив в объекты с именами и путями к иконкам
 const categoriesList = [
@@ -53,7 +58,10 @@ async function loadTransactions() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const transactions = await getTransactions()
+    const transactions = 
+    periodStart.value && periodEnd.value
+    ? await getTransactionsByPeriod(periodStart.value, periodEnd.value)
+    : await getTransactions()
     expenses.value = transactions.map(toExpenseRow)
   } catch (error) {
     errorMessage.value = error.message || 'Не удалось загрузить расходы'
@@ -110,6 +118,24 @@ async function handleAddTransaction() {
     isSubmitting.value = false
   }
 }
+async function handlePeriodSearch() {
+  periodError.value = ''
+  if (!periodStart.value || !periodEnd.value) {
+    periodError.value = 'Выберите начало и конец периода'
+    return
+  }
+  if (periodStart.value > periodEnd.value) {
+    periodError.value = 'Дата начала не может быть позже даты окончания'
+    return
+  }
+  await loadTransactions()
+}
+async function resetPeriod() {
+  periodStart.value = ''
+  periodEnd.value = ''
+  periodError.value = ''
+  await loadTransactions()
+}
 onMounted(loadTransactions)
 
 
@@ -123,6 +149,53 @@ onMounted(loadTransactions)
 
       <div class="content-layout">
         <div class="layout-left">
+          <div class="period-filter">
+            <div class="period-filter__inputs">
+              <div class="period-filter__field">
+                <input 
+                  id="periodStart" 
+                  v-model="periodStart" 
+                  type="text" 
+                  placeholder="С"
+                  onfocus="(this.type='date')"
+                  onblur="(this.value ? this.type='date' : this.type='text')"
+                >
+              </div>
+              <div class="period-filter__field">
+                <input 
+                  id="periodEnd" 
+                  v-model="periodEnd" 
+                  type="text" 
+                  placeholder="По"
+                  onfocus="(this.type='date')"
+                  onblur="(this.value ? this.type='date' : this.type='text')"
+                >
+              </div>
+            </div>
+  
+            <div class="period-filter__buttons">
+              <button
+                type="button"
+                class="period-btn period-btn_submit"
+                :disabled="isLoading"
+                @click="handlePeriodSearch"
+              >
+                Показать
+              </button>
+              <button
+                type="button"
+                class="period-btn period-btn_reset"
+                :disabled="isLoading"
+                @click="resetPeriod"
+              >
+                Сбросить
+              </button>
+            </div>
+  
+            <p v-if="periodError" class="field-error" role="alert">
+              {{ periodError }}
+            </p>
+          </div>
           <ExpensesTable :expenses="expenses" />
         </div>
         <div class="layout-right">
@@ -151,7 +224,9 @@ onMounted(loadTransactions)
                 </p>
               </div>
               <fieldset class="expense-form__categories">
-                <legend>Категория</legend>
+                <legend>
+                  Категория <span v-if="fieldErrors.category" class="star-error">*</span>
+                </legend>
                 <div class="categories-grid">
                   <label
                     v-for="item in categoriesList"
@@ -176,7 +251,9 @@ onMounted(loadTransactions)
                 {{ fieldErrors.category }}
               </p>
               <div class="form-group">
-                <label for="expDate">Дата</label>
+                <label for="expDate">
+                  Дата <span v-if="fieldErrors.date" class="star-error">*</span> 
+                </label>
                 <input
                   id="expDate"
                   v-model="date"
@@ -191,7 +268,9 @@ onMounted(loadTransactions)
                 </p>
               </div>
               <div class="form-group">
-                <label for="expAmount">Сумма</label>
+                <label for="expAmount">
+                  Сумма <span v-if="fieldErrors.amount" class="star-error">*</span>
+                </label>
                 <input
                   id="expAmount"
                   v-model="amount"
@@ -408,5 +487,93 @@ onMounted(loadTransactions)
 
 .expense-form input.input_invalid {
   border-color: #d14343;
+}
+.period-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  background: #FFFFFF;
+  border: 1px solid #D4DBE5;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.period-filter__inputs {
+  display: flex;
+  gap: 12px;
+}
+.period-filter__field {
+  flex: 1;
+}
+.period-filter__field input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #D4DBE5;
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: #000000;
+  background: transparent;
+  transition: border-color 0.2s;
+}
+
+.period-filter__field input:focus {
+  border-color: #793FED;
+}
+
+.period-filter__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Общий стиль для кнопок периода */
+.period-btn {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid #D4DBE5;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #94A6BE;
+  transition: all 0.2s ease;
+}
+
+/* Фиолетовая активная кнопка «Показать» */
+.period-btn_submit {
+  background-color: #793FED;
+  color: #FFFFFF;
+  border-color: #793FED;
+}
+
+.period-btn_submit:hover {
+  background-color: #632cd4;
+}
+
+/* Кнопка сброса */
+.period-btn_reset:hover {
+  color: #793FED;
+  border-color: #793FED;
+}
+
+.period-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.period-filter .field-error {
+  margin: 0;
+  color: #F25050;
+  font-size: 12px;
+  text-align: left;
+}
+.star-error {
+  color: #F25050; 
+  margin-left: 4px;
+  font-weight: bold;
 }
 </style>
