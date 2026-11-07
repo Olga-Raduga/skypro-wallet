@@ -1,9 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
 
 import IconCategory from '../components/IconCategory.vue'
+import {
+  addTransaction,
+  getTransactions,
+} from '../api/transactions.js'
 
 
 
@@ -42,19 +46,89 @@ const expenses = ref([
 
 // Переменные полей формы (оставляем только для v-model)
 const description = ref('')
-const category = ref('Еда')
+const category = ref('food')
 const date = ref('')
 const amount = ref('')
 
+const isLoading = ref(true)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
+
 // Переделываем массив в объекты с именами и путями к иконкам
 const categoriesList = [
-  { name: 'Еда',          icon: 'food' },
-  { name: 'Транспорт',    icon: 'transport' },
-  { name: 'Жильё',        icon: 'housing' },
-  { name: 'Развлечения',  icon: 'entertainment' },
-  { name: 'Образование',  icon: 'education' },
-  { name: 'Другое',       icon: 'other' },
+  { name: 'Еда', value: 'food', icon: 'food' },
+  { name: 'Транспорт', value: 'transport', icon: 'transport' },
+  { name: 'Жильё', value: 'housing', icon: 'housing' },
+  { name: 'Развлечения', value: 'joy', icon: 'entertainment' },
+  { name: 'Образование', value: 'education', icon: 'education' },
+  { name: 'Другое', value: 'others', icon: 'other' },
 ]
+const categoryNames = {
+  food: 'Еда',
+  transport: 'Транспорт',
+  housing: 'Жильё',
+  joy: 'Развлечения',
+  education: 'Образование',
+  others: 'Другое',
+}
+function toExpenseRow(transaction) {
+  return {
+    id: transaction._id,
+    title: transaction.description,
+    category: categoryNames[transaction.category] ?? transaction.category,
+    // В таблицу передаём YYYY-MM-DD, чтобы её форматирование даты сработало.
+    date: transaction.date?.slice(0, 10) ?? '',
+    amount: transaction.sum,
+  }
+}
+async function loadTransactions() {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const transactions = await getTransactions()
+    expenses.value = transactions.map(toExpenseRow)
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось загрузить расходы'
+  } finally {
+    isLoading.value = false
+  }
+}
+async function handleAddTransaction() {
+  errorMessage.value = ''
+  const cleanDescription = description.value.trim()
+  const sum = Number(amount.value)
+  if (cleanDescription.length < 4) {
+    errorMessage.value = 'Описание должно содержать не менее 4 символов'
+    return
+  }
+  if (!Number.isInteger(sum) || sum <= 0) {
+    errorMessage.value = 'Укажи положительную сумму целым числом'
+    return
+  }
+  if (!date.value) {
+    errorMessage.value = 'Укажи дату расхода'
+    return
+  }
+  isSubmitting.value = true
+  try {
+    await addTransaction({
+      description: cleanDescription,
+      sum,
+      category: category.value,
+      date: date.value,
+    })
+    description.value = ''
+    date.value = ''
+    amount.value = ''
+    await loadTransactions()
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось добавить расход'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+onMounted(loadTransactions)
+
 
 </script>
 
@@ -74,7 +148,7 @@ const categoriesList = [
             <form
               class="expense-form"
               novalidate
-              @submit.prevent
+              @submit.prevent="handleAddTransaction"
             >
               <div class="form-group">
                 <label for="expDesc">Описание</label>
@@ -83,6 +157,8 @@ const categoriesList = [
                   v-model.trim="description"
                   type="text"
                   placeholder="Введите описание"
+                  required
+                  minlength="4"
                 >
               </div>
               <fieldset class="expense-form__categories">
@@ -92,13 +168,13 @@ const categoriesList = [
                     v-for="item in categoriesList"
                     :key="item.name"
                     class="category-label"
-                    :class="{ 'category-label_active': category === item.name }"
+                    :class="{ 'category-label_active': category === item.value }"
                   >
                     <input
                       v-model="category"
                       type="radio"
                       name="category"
-                      :value="item.name"
+                      :value="item.value"
                       class="hidden-radio"
                     >
                     <!-- Динамически выводим картинку-иконку -->
@@ -113,6 +189,7 @@ const categoriesList = [
                   id="expDate"
                   v-model="date"
                   type="date"
+                  required
                 >
               </div>
               <div class="form-group">
@@ -121,8 +198,8 @@ const categoriesList = [
                   id="expAmount"
                   v-model="amount"
                   type="number"
-                  min="0.01"
-                  step="0.01"
+                  min="1"
+                  step="1"
                   placeholder="Введите сумму"
                 >
               </div>
@@ -132,8 +209,9 @@ const categoriesList = [
               <button
                 type="submit"
                 class="submit-btn"
+                :disabled="isSubmitting"
               >
-                Добавить новый расход
+                {{ isSubmitting ? 'Добавляем…' : 'Добавить новый расход' }}
               </button>
             </form>
           </div>
@@ -214,15 +292,30 @@ const categoriesList = [
   min-width: 0;
   padding: 0 14px;
   height: 44px;
-  border: 1px solid #F1EBFD;
-  background-color: #F1EBFD;
+  border: 1px solid #999999;
+  
   font-size: 12px;
   border-radius: 8px;
   font: inherit;
   outline: none;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
 }
 .expense-form input[type='number']:focus {
-  border-color: #793FED;
+  border-color: #7334EA;
+  background-color: #F1EBFD;
+}
+.expense-error {
+  margin: 0 0 16px;
+  color: #d94352;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.expense-status {
+  margin: 0 0 16px;
+  color: #596579;
+  font-size: 13px;
 }
 .form-group {
   display: flex;
@@ -237,7 +330,7 @@ const categoriesList = [
 .form-group input[type="text"], .form-group input[type="date"] {
   height: 44px;
   padding: 0 14px;
-  border: 1px solid #D4DBE5;
+  border: 1px solid #999999;
   border-radius: 8px;
   outline: none;
   font-size: 12px;
@@ -257,7 +350,8 @@ const categoriesList = [
   align-items: center;
   gap: 6px; /* Небольшой отступ между картинкой и текстом */
   padding: 8px 14px;
-  border: 1px solid #D4DBE5;
+  border: 1px solid #F4F5F6;
+  background-color: #F4F5F6;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;

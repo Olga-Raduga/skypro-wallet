@@ -121,30 +121,20 @@ function formatDate(value) {
   font-size: 12px;
   font-weight: 500;
 }
-/* Колонка для корзины */
-.delete-col {
-  width: 40px;
-}
-
-.delete-cell {
-  text-align: right;
-}
-
 .delete-button {
-  background: transparent;
-  border: none;
+  appearance: none;
+  border: 0;
   padding: 4px;
+  background: transparent;
+  box-shadow: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #999999;
+  color: #999;
   cursor: pointer;
-  border-radius: 6px;
-  transition: color 0.2s, background-color 0.2s;
 }
-
 .delete-button:hover {
-  color: #7334EA;
-  background-color: #F3EEFE;
+  background: transparent;
+  color: #7334ea;
 }
 </style>
