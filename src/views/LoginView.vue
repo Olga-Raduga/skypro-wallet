@@ -1,10 +1,35 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter,  RouterLink } from 'vue-router'
+import { loginUser } from '../api/auth.js'
+import { setToken } from '../api/http.js'
 
 const router = useRouter()
 
-function handleLogin() {
-  router.push('/expenses')
+const login = ref('')
+const password = ref('')
+const errorMessage = ref('')
+const isSubmitting = ref(false)
+
+async function handleLogin() {
+  errorMessage.value = ''
+  isSubmitting.value = true
+  try {
+    const response = await loginUser({
+      login: login.value,
+      password: password.value,
+    })
+    const token = response?.user?.token
+    if (!token) {
+      throw new Error('Сервер не вернул токен авторизации')
+    }
+    setToken(token)
+  await router.push('/expenses')
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось войти'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -14,28 +39,35 @@ function handleLogin() {
       <h1>Вход</h1>
       <form
         class="auth-form"
-        novalidate
         @submit.prevent="handleLogin"
       >
         <input
           id="loginEmail"
-          type="text"
-          name="email"
+          v-model.trim="login"
+          type="email"
+          name="login"
           autocomplete="email"
           placeholder="Введите ваш email"
+          required
         >
 
         <input
-          id="loginPassword"    
+          id="loginPassword"
+          v-model="password"    
           type="password"
           name="password"
           autocomplete="current-password"
           placeholder="Пароль"
+          required
         >
+        <p v-if="errorMessage" class="auth-error" role="alert">
+          {{ errorMessage }}
+        </p>
 
         <button
           type="submit"
           class="auth-btn"
+          :disabled="isSubmitting"
         >
           Войти
         </button>   

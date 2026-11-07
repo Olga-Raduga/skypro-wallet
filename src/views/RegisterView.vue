@@ -1,10 +1,32 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import { registerUser } from '../api/auth.js'
 
 const router = useRouter()
 
-function handleRegister() {
+const name = ref('')
+const login = ref('')
+const password = ref('')
+const errorMessage = ref('')
+const isSubmitting = ref(false)
+
+async function handleRegister() {
+  errorMessage.value = ''
+  isSubmitting.value = true
+  try {
+    await registerUser({
+      login: login.value,
+      name: name.value,
+      password: password.value,
+    })
+  
   router.push('/login')
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось зарегистрироваться'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -14,30 +36,47 @@ function handleRegister() {
       <h1>Регистрация</h1>
       <form
         class="auth-form"
-        novalidate
         @submit.prevent="handleRegister"
       >
         <input
-          id="registerEmail"       
+          id="registerName"
+          v-model.trim="name"
           type="text"
+          name="name"
+          autocomplete="name"
+          placeholder="Имя"
+          required
+        >
+        <input
+          id="registerEmail"
+          v-model.trim="login"       
+          type="email"
           name="email"
           autocomplete="email"
           placeholder="Эл. почта"
+          required
         >
 
         <input
           id="registerPassword"
+          v-model="password"
           type="password"
           name="password"
           autocomplete="new-password"
           placeholder="Пароль"
+          required
         >
+
+        <p v-if="errorMessage" class="auth-error" role="alert">
+          {{ errorMessage }}
+        </p>
        
         <button
           type="submit"
           class="auth-btn"
+          :disabled="isSubmitting"
         >
-          Зарегистрироваться
+          {{ isSubmitting ? 'Регистрируем…' : 'Зарегистрироваться' }}
         </button>
       </form>
 
