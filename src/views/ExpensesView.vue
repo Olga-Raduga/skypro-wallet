@@ -9,40 +9,7 @@ import {
   getTransactions,
 } from '../api/transactions.js'
 
-
-
-
-// Статичный массив примеров расходов на первый спринт
-const expenses = ref([
-  {
-    id: 1,
-    title: 'Интернет',
-    category: 'Развлечения',
-    date: '2026-07-01',
-    amount: 1200,
-  },
-  {
-    id: 2,
-    title: 'Яндекс Плюс',
-    category: 'Развлечения',
-    date: '2026-07-02',
-    amount: 399,
-  },
-  {
-    id: 3,
-    title: 'Аптека Вита',
-    category: 'Другое',
-    date: '2026-07-03',
-    amount: 1540,
-  },
-  {
-    id: 4,
-    title: 'Купер Маркет',
-    category: 'Еда',
-    date: '2026-07-04',
-    amount: 4310,
-  },
-])
+const expenses = ref([])
 
 // Переменные полей формы (оставляем только для v-model)
 const description = ref('')
@@ -53,6 +20,7 @@ const amount = ref('')
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+const fieldErrors = ref({})
 
 // Переделываем массив в объекты с именами и путями к иконкам
 const categoriesList = [
@@ -93,33 +61,48 @@ async function loadTransactions() {
     isLoading.value = false
   }
 }
-async function handleAddTransaction() {
-  errorMessage.value = ''
+function validateExpense() {
+  const errors = {}
   const cleanDescription = description.value.trim()
   const sum = Number(amount.value)
-  if (cleanDescription.length < 4) {
-    errorMessage.value = 'Описание должно содержать не менее 4 символов'
-    return
+  if (!cleanDescription) {
+    errors.description = 'Введите описание'
+  } else if (cleanDescription.length < 4) {
+    errors.description = 'Описание должно содержать не менее 4 символов'
   }
-  if (!Number.isInteger(sum) || sum <= 0) {
-    errorMessage.value = 'Укажи положительную сумму целым числом'
-    return
+  if (!categoriesList.some((item) => item.value === category.value)) {
+    errors.category = 'Выберите категорию'
   }
   if (!date.value) {
-    errorMessage.value = 'Укажи дату расхода'
-    return
+    errors.date = 'Укажите дату расхода'
   }
+  if (amount.value === '' || !Number.isSafeInteger(sum) || sum <= 0) {
+    errors.amount = 'Укажите положительную сумму целым числом'
+  }
+  fieldErrors.value = errors
+  return Object.keys(errors).length === 0
+}
+function clearFieldError(field) {
+  if (!fieldErrors.value[field]) return
+  const errors = { ...fieldErrors.value }
+  delete errors[field]
+  fieldErrors.value = errors
+}
+async function handleAddTransaction() {
+  errorMessage.value = ''
+  if (!validateExpense()) return
   isSubmitting.value = true
   try {
     await addTransaction({
-      description: cleanDescription,
-      sum,
+      description: description.value.trim(),
+      sum: Number(amount.value),
       category: category.value,
       date: date.value,
     })
     description.value = ''
     date.value = ''
     amount.value = ''
+    fieldErrors.value = {}
     await loadTransactions()
   } catch (error) {
     errorMessage.value = error.message || 'Не удалось добавить расход'
@@ -159,7 +142,13 @@ onMounted(loadTransactions)
                   placeholder="Введите описание"
                   required
                   minlength="4"
+                  :aria-invalid="Boolean(fieldErrors.description)"
+                  :class="{ input_invalid: fieldErrors.description }"
+                  @input="clearFieldError('description')"
                 >
+                <p v-if="fieldErrors.description" class="field-error" role="alert">
+                  {{ fieldErrors.description }}
+                </p>
               </div>
               <fieldset class="expense-form__categories">
                 <legend>Категория</legend>
@@ -183,6 +172,9 @@ onMounted(loadTransactions)
                   </label>
                 </div>
               </fieldset>
+              <p v-if="fieldErrors.category" class="field-error" role="alert">
+                {{ fieldErrors.category }}
+              </p>
               <div class="form-group">
                 <label for="expDate">Дата</label>
                 <input
@@ -190,7 +182,13 @@ onMounted(loadTransactions)
                   v-model="date"
                   type="date"
                   required
+                  :aria-invalid="Boolean(fieldErrors.date)"
+                  :class="{ input_invalid: fieldErrors.date }"
+                  @change="clearFieldError('date')"
                 >
+                <p v-if="fieldErrors.date" class="field-error" role="alert">
+                  {{ fieldErrors.date }}
+                </p>
               </div>
               <div class="form-group">
                 <label for="expAmount">Сумма</label>
@@ -201,10 +199,19 @@ onMounted(loadTransactions)
                   min="1"
                   step="1"
                   placeholder="Введите сумму"
+                  required
+                  :aria-invalid="Boolean(fieldErrors.amount)"
+                  :class="{ input_invalid: fieldErrors.amount }"
+                  @input="clearFieldError('amount')"
                 >
+                <p v-if="fieldErrors.amount" class="field-error" role="alert">
+                  {{ fieldErrors.amount }}
+                </p>
               </div>
               
-              <!-- Вывод ошибок и notice полностью удален -->
+              <p v-if="errorMessage" class="form-error" role="alert">
+                {{ errorMessage }}
+              </p>
 
               <button
                 type="submit"
@@ -391,5 +398,15 @@ onMounted(loadTransactions)
 }
 .submit-btn:hover {
   background-color: #7334EA;
+}
+.field-error,
+.form-error {
+  margin: 6px 0 0;
+  color: #d14343;
+  font-size: 12px;
+}
+
+.expense-form input.input_invalid {
+  border-color: #d14343;
 }
 </style>
