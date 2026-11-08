@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter,  RouterLink } from 'vue-router'
 import { loginUser } from '../api/auth.js'
 import { setToken } from '../api/http.js'
@@ -10,13 +10,30 @@ const login = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
+const hasSubmitted = ref(false)
+
+// Локальная валидация для управления звёздочками и подсветкой
+const isLoginInvalid = computed(() => hasSubmitted.value && (!login.value.trim() || !login.value.includes('@')))
+const isPasswordInvalid = computed(() => hasSubmitted.value && !password.value)
+
+function clearError() {
+  errorMessage.value = ''
+  hasSubmitted.value = false
+}
 
 async function handleLogin() {
+  hasSubmitted.value = true
   errorMessage.value = ''
+
+  // Если локальная проверка не пройдена, не отправляем запрос
+  if (!login.value.trim() || !login.value.includes('@') || !password.value) {
+    return
+  }
+
   isSubmitting.value = true
   try {
     const response = await loginUser({
-      login: login.value,
+      login: login.value.trim(),
       password: password.value,
     })
     const token = response?.user?.token
@@ -25,8 +42,8 @@ async function handleLogin() {
     }
     setToken(token)
   await router.push('/expenses')
-  } catch (error) {
-    errorMessage.value = error.message || 'Не удалось войти'
+  } catch {
+    errorMessage.value = 'Упс! Введенные вами данные некорректны. Введите данные корректно и повторите попытку.'
   } finally {
     isSubmitting.value = false
   }
@@ -39,27 +56,47 @@ async function handleLogin() {
       <h1>Вход</h1>
       <form
         class="auth-form"
+        novalidate
         @submit.prevent="handleLogin"
       >
-        <input
-          id="loginEmail"
-          v-model.trim="login"
-          type="email"
-          name="login"
-          autocomplete="email"
-          placeholder="Введите ваш email"
-          required
-        >
+        <div class="input-wrapper">
+          <input
+            id="loginEmail"
+            v-model.trim="login"
+            type="email"
+            name="login"
+            autocomplete="email"
+            placeholder="Введите ваш email"
+            :class="{ 'auth-input_invalid': isLoginInvalid || errorMessage }"
+            required
+            @input="clearError"          
+          >
+          <span
+            v-if="isLoginInvalid"
+            class="required-star"
+            aria-hidden="true"
+          >*</span>
+        </div>
+        
 
-        <input
-          id="loginPassword"
-          v-model="password"    
-          type="password"
-          name="password"
-          autocomplete="current-password"
-          placeholder="Пароль"
-          required
-        >
+        <div class="input-wrapper">
+          <input
+            id="loginPassword"
+            v-model="password"    
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Пароль"
+            :class="{ 'auth-input_invalid': isPasswordInvalid || errorMessage }"
+            required
+            @input="clearError"           
+          >
+          <span
+            v-if="isPasswordInvalid"
+            class="required-star"
+            aria-hidden="true"
+          >*</span>
+        </div>
         <p v-if="errorMessage" class="auth-error" role="alert">
           {{ errorMessage }}
         </p>
@@ -67,9 +104,10 @@ async function handleLogin() {
         <button
           type="submit"
           class="auth-btn"
+          :class="{ 'auth-btn--invalid': isSubmitting || errorMessage }"
           :disabled="isSubmitting"
         >
-          Войти
+          {{ isSubmitting ? 'Входим…' : 'Войти' }}
         </button>   
       </form>
 
@@ -192,5 +230,19 @@ async function handleLogin() {
 }
 .auth-link:hover {
   text-decoration: underline;
+}
+.input-wrapper {
+  position: relative;
+}
+
+.required-star {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  color: #d14343;
+  font-size: 16px;
+  font-weight: 600;
+  pointer-events: none;
 }
 </style>

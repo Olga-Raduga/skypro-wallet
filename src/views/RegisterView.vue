@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { registerUser } from '../api/auth.js'
 
@@ -10,20 +10,41 @@ const login = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
+const hasSubmitted = ref(false)
+
+const isNameInvalid = computed(() => hasSubmitted.value && !name.value.trim())
+const isLoginInvalid = computed(() => hasSubmitted.value && (!login.value.trim() || !login.value.includes('@')))
+const isPasswordInvalid = computed(() => hasSubmitted.value && !password.value)
+
+function clearError() {
+  errorMessage.value = ''
+  hasSubmitted.value = false
+}
+
 
 async function handleRegister() {
+  hasSubmitted.value = true
   errorMessage.value = ''
+
+  if (!name.value.trim() || !login.value.trim() || !password.value) {
+    errorMessage.value = 'Упс! Все поля обязательны для заполнения.'
+    return
+  }
+  if (!login.value.includes('@')) {
+    errorMessage.value = 'Упс! Введен некорректный адрес электронной почты.'
+    return
+  }
   isSubmitting.value = true
   try {
     await registerUser({
-      login: login.value,
-      name: name.value,
+      login: login.value.trim(),
+      name: name.value.trim(),
       password: password.value,
     })
   
-  router.push('/login')
-  } catch (error) {
-    errorMessage.value = error.message || 'Не удалось зарегистрироваться'
+  await router.push('/login')
+  } catch {
+    errorMessage.value = 'Упс! Введенные вами данные некорректны. Введите данные корректно и повторите попытку.'
   } finally {
     isSubmitting.value = false
   }
@@ -36,37 +57,53 @@ async function handleRegister() {
       <h1>Регистрация</h1>
       <form
         class="auth-form"
+        novalidate
         @submit.prevent="handleRegister"
       >
-        <input
-          id="registerName"
-          v-model.trim="name"
-          type="text"
-          name="name"
-          autocomplete="name"
-          placeholder="Имя"
-          required
-        >
-        <input
-          id="registerEmail"
-          v-model.trim="login"       
-          type="email"
-          name="email"
-          autocomplete="email"
-          placeholder="Эл. почта"
-          required
-        >
+        <div class="input-wrapper">
+          <input
+            id="registerName"
+            v-model.trim="name"
+            type="text"
+            name="name"
+            autocomplete="name"
+            placeholder="Имя" 
+            :class="{ 'auth-input_invalid': isNameInvalid || errorMessage }"
+            required
+            @input="clearError"       
+          >
+          <span v-if="isNameInvalid" class="required-star" aria-hidden="true">*</span>
+        </div>
 
-        <input
-          id="registerPassword"
-          v-model="password"
-          type="password"
-          name="password"
-          autocomplete="new-password"
-          placeholder="Пароль"
-          required
-        >
+        <div class="input-wrapper">
+          <input
+            id="registerEmail"
+            v-model.trim="login"       
+            type="email"
+            name="email"
+            autocomplete="email"
+            placeholder="Эл. почта"
+            :class="{ 'auth-input_invalid': isLoginInvalid || errorMessage }"
+            required
+            @input="clearError"        
+          >
+          <span v-if="isLoginInvalid" class="required-star" aria-hidden="true">*</span>
+        </div>
 
+        <div class="input-wrapper">
+          <input
+            id="registerPassword"
+            v-model="password"
+            type="password"
+            name="password"
+            autocomplete="new-password"
+            placeholder="Пароль"
+            :class="{ 'auth-input_invalid': isPasswordInvalid || errorMessage }"
+            required
+            @input="clearError"     
+          >
+          <span v-if="isPasswordInvalid" class="required-star" aria-hidden="true">*</span>
+        </div>
         <p v-if="errorMessage" class="auth-error" role="alert">
           {{ errorMessage }}
         </p>
@@ -74,6 +111,7 @@ async function handleRegister() {
         <button
           type="submit"
           class="auth-btn"
+          :class="{ 'auth-btn--invalid': isSubmitting || errorMessage }"
           :disabled="isSubmitting"
         >
           {{ isSubmitting ? 'Регистрируем…' : 'Зарегистрироваться' }}
@@ -199,5 +237,19 @@ async function handleRegister() {
 }
 .auth-link:hover {
   text-decoration: underline;
+}
+.input-wrapper {
+  position: relative;
+}
+
+.required-star {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  color: #d14343;
+  font-size: 16px;
+  font-weight: 600;
+  pointer-events: none;
 }
 </style>
