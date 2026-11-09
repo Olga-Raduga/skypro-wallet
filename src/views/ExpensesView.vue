@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
 
@@ -22,6 +22,7 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const fieldErrors = ref({})
+const hasSubmitted = ref(false)
 
 const periodStart = ref('')
 const periodEnd = ref('')
@@ -90,6 +91,23 @@ function validateExpense() {
   fieldErrors.value = errors
   return Object.keys(errors).length === 0
 }
+
+function isFormValid() {
+  const cleanDescription = description.value.trim()
+  const sum = Number(amount.value)
+  return (
+    cleanDescription.length >= 4 &&
+    categoriesList.some((item) => item.value === category.value) &&
+    Boolean(date.value) &&
+    Number.isSafeInteger(sum) &&
+    sum > 0
+  )
+}
+
+const isSubmitDisabled = computed(() => {
+  return isSubmitting.value || (hasSubmitted.value && !isFormValid())
+})
+
 function clearFieldError(field) {
   if (!fieldErrors.value[field]) return
   const errors = { ...fieldErrors.value }
@@ -98,6 +116,8 @@ function clearFieldError(field) {
 }
 async function handleAddTransaction() {
   errorMessage.value = ''
+  hasSubmitted.value = true
+
   if (!validateExpense()) return
   isSubmitting.value = true
   try {
@@ -295,7 +315,7 @@ onMounted(loadTransactions)
               <button
                 type="submit"
                 class="submit-btn"
-                :disabled="isSubmitting"
+                :disabled="isSubmitDisabled"
               >
                 {{ isSubmitting ? 'Добавляем…' : 'Добавить новый расход' }}
               </button>
@@ -451,7 +471,7 @@ onMounted(loadTransactions)
   border-color: #F1EBFD;
 }
 
-/* Стили для иконки категории по ТЗ наставника */
+/* Стили для иконки категории */
 .category-icon {
   width: 14px;
   height: 14px;
@@ -477,6 +497,16 @@ onMounted(loadTransactions)
 }
 .submit-btn:hover {
   background-color: #7334EA;
+}
+.submit-btn:disabled {
+  background: #c8ccd6;
+  border-color: #c8ccd6;
+  cursor: not-allowed;
+  opacity: 1;
+}
+.submit-btn:disabled:hover {
+  background: #c8ccd6;
+  border-color: #c8ccd6;
 }
 .field-error,
 .form-error {

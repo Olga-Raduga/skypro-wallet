@@ -4,7 +4,7 @@ function makePayload({ description, sum, category, date }) {
     description: description.trim(),
     sum: Number(sum),
     category,
-    date,
+    date: formatDateForApi(date),
   }
 }
 export function getTransactions() {

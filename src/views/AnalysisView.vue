@@ -1,64 +1,189 @@
 
 <script setup>
+import { computed, onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
-const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-// Демо-данные: два месяца подряд, как на макете.
-const months = [
-  {
-    title: 'Июль 2026',
-    // первое число — среда (Пн=0, Вт=1, Ср=2) → 2 пустых
-    leadingEmpty: 2,
-    days: 31,
-  },
-  {
-    title: 'Август 2026',
-    // август начинается в субботу (Пн=0 … Сб=5) → 5 пустых
-    leadingEmpty: 5,
-    days: 31,
-  },
-]
+import {
+  getTransactions,
+  getTransactionsByPeriod,
+} from '../api/transactions.js'
 
-const selectedDay = 15
-// Демонстрационные данные для отображения диаграммы.
-const chartItems = [
-  {
-    name: 'Продукты',
-    value: '4 310 ₽',
-    height: '88%',
-    color: '#c99cff',
-  },
-  {
-    name: 'Транспорт',
-    value: '0 ₽',
-    height: '3%',
-    color: '#ffbb4a',
-  },
-  {
-    name: 'Жильё',
-    value: '0 ₽',
-    height: '3%',
-    color: '#a6a2ff',
-  },
-  {
-    name: 'Развлечения',
-    value: '1 599 ₽',
-    height: '38%',
-    color: '#ff9eac',
-  },
-  {
-    name: 'Образование',
-    value: '0 ₽',
-    height: '3%',
-    color: '#a6d92f',
-  },
-  {
-    name: 'Другое',
-    value: '1 540 ₽',
-    height: '37%',
-    color: '#a8b3ff',
-  },
+const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+const today = new Date()
+const visibleMonth = ref(
+  new Date(today.getFullYear(), today.getMonth(), 1, 12)
+)
+const selectedStart = ref('')
+const selectedEnd = ref('')
+const transactions = ref([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+function toInputDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+function formatDateRu(value) {
+  if (!value) return ''
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(year, month - 1, day, 12)
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+}
+
+
+const months = computed(() => {
+  const base = visibleMonth.value
+  const count = 12 // сколько месяцев показываем подряд (можно изменить)
+
+  return Array.from({ length: count }, (_, offset) => {
+    const firstDay = new Date(
+      base.getFullYear(),
+      base.getMonth() + offset,
+      1,
+      12
+    )
+    const year = firstDay.getFullYear()
+    const month = firstDay.getMonth()
+    const daysInMonth = new Date(year, month + 1, 0, 12).getDate()
+    return {
+      title: new Intl.DateTimeFormat('ru-RU', {
+        month: 'long',
+        year: 'numeric',
+      }).format(firstDay),
+      leadingEmpty: (firstDay.getDay() + 6) % 7,
+      days: Array.from({ length: daysInMonth }, (_, index) => {
+        const date = new Date(year, month, index + 1, 12)
+        return {
+          day: index + 1,
+          value: toInputDate(date),
+        }
+      }),
+    }
+  })
+})
+
+function isDaySelected(value) {
+  return value === selectedStart.value || value === selectedEnd.value
+}
+function isDayInRange(value) {
+  return Boolean(
+    selectedStart.value &&
+      selectedEnd.value &&
+      value > selectedStart.value &&
+      value < selectedEnd.value
+  )
+}
+async function loadAllTransactions() {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const result = await getTransactions()
+    transactions.value = Array.isArray(result) ? result : []
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось загрузить транзакции'
+  } finally {
+    isLoading.value = false
+  }
+}
+async function loadPeriodTransactions() {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const result = await getTransactionsByPeriod(
+      selectedStart.value,
+      selectedEnd.value
+    )
+    transactions.value = Array.isArray(result) ? result : []
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось загрузить период'
+  } finally {
+    isLoading.value = false
+  }
+}
+async function selectDate(value) {
+  if (isLoading.value) return
+  // Первый клик задаёт начало нового периода.
+  if (!selectedStart.value || selectedEnd.value) {
+    selectedStart.value = value
+    selectedEnd.value = ''
+    return
+  }
+  // Если конец выбран раньше начала, переставляем даты местами.
+  if (value < selectedStart.value) {
+    selectedEnd.value = selectedStart.value
+    selectedStart.value = value
+  } else {
+    selectedEnd.value = value
+  }
+  await loadPeriodTransactions()
+}
+async function resetPeriod() {
+  selectedStart.value = ''
+  selectedEnd.value = ''
+  await loadAllTransactions()
+}
+const selectedPeriodLabel = computed(() => {
+  if (!selectedStart.value) {
+    return 'Выберите начало и конец периода'
+  }
+  if (!selectedEnd.value) {
+    return `Начало: ${formatDateRu(selectedStart.value)} — выберите конец`
+  }
+  return `${formatDateRu(selectedStart.value)} — ${formatDateRu(selectedEnd.value)}`
+})
+const chartPeriodLabel = computed(() => {
+  if (!selectedStart.value || !selectedEnd.value) {
+    return 'Все загруженные транзакции'
+  }
+  return `Расходы за ${formatDateRu(selectedStart.value)} — ${formatDateRu(selectedEnd.value)}`
+})
+const categories = [
+  { key: 'food', name: 'Еда', color: '#D9B6FF' },
+  { key: 'transport', name: 'Транспорт', color: '#FFB53D' },
+  { key: 'housing', name: 'Жильё', color: '#6EE4FE' },
+  { key: 'joy', name: 'Развлечения', color: '#B0AEFF' },
+  { key: 'education', name: 'Образование', color: '#BCEC30' },
+  { key: 'others', name: 'Другое', color: '#FFB9B8' },
 ]
+const numberFormatter = new Intl.NumberFormat('ru-RU')
+function formatMoney(value) {
+  return `${numberFormatter.format(value)} ₽`
+}
+const totalExpenses = computed(() =>
+  transactions.value.reduce(
+    (total, transaction) => total + Number(transaction.sum || 0),
+    0
+  )
+)
+const chartItems = computed(() => {
+  const totalsByCategory = categories.map((category) => ({
+    ...category,
+    amount: transactions.value
+      .filter((transaction) => transaction.category === category.key)
+      .reduce((total, transaction) => total + Number(transaction.sum || 0), 0),
+  }))
+  const maxAmount = Math.max(
+    1,
+    ...totalsByCategory.map((category) => category.amount)
+  )
+  return totalsByCategory.map((category) => ({
+    name: category.name,
+    value: formatMoney(category.amount),
+    height:
+      category.amount === 0
+        ? '0%'
+        : `${Math.max(3, (category.amount / maxAmount) * 100)}%`,
+    color: category.color,
+  }))
+})
+onMounted(loadAllTransactions)
 </script>
+
 <template>
   <div class="analysis-page">
     <HeaderView />
@@ -103,34 +228,54 @@ const chartItems = [
                   class="calendar-day calendar-day--empty"
                 ></span>
 
-                <span
-                  v-for="d in month.days"
-                  :key="`day-${month.title}-${d}`"
+                <button
+                  v-for="day in month.days"
+                  :key="day.value"
+                  type="button"
                   class="calendar-day"
-                  :class="{ 'calendar-day--selected': d === selectedDay }"
+                  :class="{
+                    'calendar-day--selected': isDaySelected(day.value),
+                    'calendar-day--in-range': isDayInRange(day.value),
+                  }"
+                  :disabled="isLoading"
+                  @click="selectDate(day.value)"
                 >
-                  {{ d }}
-                </span>
+                  {{ day.day }}
+                </button>
               </div>
             </div>
           </div>
           
           <div class="calendar-footer">
-            <span class="calendar-footer__label">Пример периода</span>
-            <strong>15 июля 2026</strong>
+            <div class="calendar-footer__info">
+              <span class="calendar-footer__label">Выбранный период</span>
+              <strong class="calendar-footer__value">{{ selectedPeriodLabel }}</strong>
+            </div>
+            <button 
+              type="button"
+              class="calendar-footer__reset-btn" :disabled="isLoading" 
+              @click="resetPeriod"
+            >
+              Сбросить
+            </button>
           </div>
         </article>
         <article class="panel chart-panel">
           <header class="panel-header">
             <div>
               <h2 class="panel-title">Расходы по категориям</h2>
-              <p class="panel-subtitle">Расходы за июль 2026</p>
+              <p class="panel-subtitle">{{ chartPeriodLabel }}</p>
             </div>
             <div class="total-block">
               <span class="total-block__label">Всего расходов</span>
-              <strong>7 449 ₽</strong>
+              <strong>{{ formatMoney(totalExpenses) }}</strong>
             </div>
           </header>
+
+          <p v-if="errorMessage" role="alert">{{ errorMessage }}</p>
+          <p v-else-if="isLoading">Загружаем транзакции…</p>
+          <p v-else-if="transactions.length === 0">За этот период расходов нет</p>
+
           <div class="chart-scroll">
             <div
               class="bar-chart"
@@ -244,7 +389,7 @@ const chartItems = [
 /* Прокручиваемая область с месяцами */
 
 .calendar-scroll {
-  max-height: 340px;
+  max-height: 420px;
   overflow-y: auto;
   padding-right: 6px; /* место под скроллбар */
   scrollbar-width: thin;
@@ -260,7 +405,7 @@ const chartItems = [
 }
 
 .calendar-scroll::-webkit-scrollbar-thumb {
-  background: #d4d9e4;
+  background: #D9D9D9;
   border-radius: 3px;
 }
 
@@ -289,38 +434,82 @@ const chartItems = [
 
 .calendar-day {
   display: grid;
-  aspect-ratio: 1 / 1;   /* круг ровный независимо от ширины */
+  aspect-ratio: 1 / 1;
   place-items: center;
   border: none;
   border-radius: 50%;
-  color: #333b4a;
+  color: #000000;
   font-size: 12px;
   cursor: default;
 }
 .calendar-day--empty {
   background: transparent;
 }
-.calendar-day--selected {
-  background: #F1EBFD;
-  color: #7334EA;
-  font-weight: 600;
-}
 .calendar-footer {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
   margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #edf0f5;
-  font-size: 13px;
+  padding: 4px;
+  background: #FAFAFA;
+  border-top: 1px solid #D4DBE5;
+  border-radius: 8px;
+  font-size: 10px;
+  text-align: left;
+}
+.calendar-footer__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .calendar-footer__label {
-  color: #8993a5;
+  color: #737e91;
+  font-size: 10px;
+}
+.calendar-footer__reset-btn {
+  height: 32px;
+  width: 100%;
+  border: 1px solid #D4DBE5;
+  background: #FFFFFF;
+  color: #94A6BE;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.calendar-footer__reset-btn:hover:not(:disabled) {
+  color: #793FED;
+  border-color: #793FED;
 }
 .calendar-footer strong {
-  color: #333b4a;
+  color: #737e91;
   font-weight: 500;
 }
+
+.calendar-month-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-day--selected {
+  border-radius: 50%;
+  background: #F1EBFD;
+  color: #7334EA;
+  font-weight: 400;
+}
+
+.calendar-day--in-range {
+  border-radius: 50%;
+  background: #eee9ff;
+  color: #7334EA;
+}
+
+.calendar-day:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 /* --- ГРАФИК --- */
 .total-block {
   display: flex;
