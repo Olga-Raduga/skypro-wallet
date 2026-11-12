@@ -4,6 +4,8 @@ import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
 
 import IconCategory from '../components/IconCategory.vue'
+import { CATEGORIES, CATEGORY_LABELS } from '../constants/categories.js'
+
 import {
   addTransaction,
   getTransactions,
@@ -28,29 +30,18 @@ const periodStart = ref('')
 const periodEnd = ref('')
 const periodError = ref('')
 
-// Переделываем массив в объекты с именами и путями к иконкам
-const categoriesList = [
-  { name: 'Еда', value: 'food', icon: 'food' },
-  { name: 'Транспорт', value: 'transport', icon: 'transport' },
-  { name: 'Жильё', value: 'housing', icon: 'housing' },
-  { name: 'Развлечения', value: 'joy', icon: 'entertainment' },
-  { name: 'Образование', value: 'education', icon: 'education' },
-  { name: 'Другое', value: 'others', icon: 'other' },
-]
-const categoryNames = {
-  food: 'Еда',
-  transport: 'Транспорт',
-  housing: 'Жильё',
-  joy: 'Развлечения',
-  education: 'Образование',
-  others: 'Другое',
-}
+
+const categoriesList = CATEGORIES.map(({ key, label, icon }) => ({
+  name: label,
+  value: key,
+  icon,
+}))
+
 function toExpenseRow(transaction) {
   return {
     id: transaction._id,
     title: transaction.description,
-    category: categoryNames[transaction.category] ?? transaction.category,
-    // В таблицу передаём YYYY-MM-DD, чтобы её форматирование даты сработало.
+    category: CATEGORY_LABELS[transaction.category] ?? transaction.category,
     date: transaction.date?.slice(0, 10) ?? '',
     amount: transaction.sum,
   }
@@ -504,10 +495,7 @@ onMounted(loadTransactions)
   cursor: not-allowed;
   opacity: 1;
 }
-.submit-btn:disabled:hover {
-  background: #c8ccd6;
-  border-color: #c8ccd6;
-}
+
 .field-error,
 .form-error {
   margin: 6px 0 0;

@@ -1,19 +1,14 @@
 <script setup>
+import { formatMoney } from '../utils/format.js'
 const props = defineProps({
   expenses: {
     type: Array,
     required: true,
   },
 })
-const amountFormatter = new Intl.NumberFormat('ru-RU', {
-  style: 'currency',
-  currency: 'RUB',
-  maximumFractionDigits: 2,
-})
+
 const dateFormatter = new Intl.DateTimeFormat('ru-RU')
-function formatAmount(amount) {
-  return amountFormatter.format(amount)
-}
+
 function formatDate(value) {
   const date = new Date(`${value}T00:00:00`)
   if (Number.isNaN(date.getTime())) {
@@ -53,7 +48,7 @@ function formatDate(value) {
           </td>
           <td>{{ formatDate(item.date) }}</td>
           <td class="amount-cell">
-            {{ formatAmount(item.amount) }}
+            {{ formatMoney(item.amount) }}
           </td>
           <td class="delete-cell">
             <button type="button" class="delete-button" aria-label="Удалить расход">

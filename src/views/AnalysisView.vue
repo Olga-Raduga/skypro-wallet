@@ -2,6 +2,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
+import { CATEGORIES } from '../constants/categories.js'
+import { formatMoney } from '../utils/format.js'
 import {
   getTransactions,
   getTransactionsByPeriod,
@@ -66,6 +68,7 @@ const months = computed(() => {
     }
   })
 })
+
 
 function isDaySelected(value) {
   return value === selectedStart.value || value === selectedEnd.value
@@ -142,18 +145,13 @@ const chartPeriodLabel = computed(() => {
   }
   return `Расходы за ${formatDateRu(selectedStart.value)} — ${formatDateRu(selectedEnd.value)}`
 })
-const categories = [
-  { key: 'food', name: 'Еда', color: '#D9B6FF' },
-  { key: 'transport', name: 'Транспорт', color: '#FFB53D' },
-  { key: 'housing', name: 'Жильё', color: '#6EE4FE' },
-  { key: 'joy', name: 'Развлечения', color: '#B0AEFF' },
-  { key: 'education', name: 'Образование', color: '#BCEC30' },
-  { key: 'others', name: 'Другое', color: '#FFB9B8' },
-]
-const numberFormatter = new Intl.NumberFormat('ru-RU')
-function formatMoney(value) {
-  return `${numberFormatter.format(value)} ₽`
-}
+const categories = CATEGORIES.map(({ key, label, color }) => ({
+  key,
+  name: label,
+  color,
+}))
+
+
 const totalExpenses = computed(() =>
   transactions.value.reduce(
     (total, transaction) => total + Number(transaction.sum || 0),
