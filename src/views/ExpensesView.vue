@@ -1,60 +1,86 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
+import PeriodFilter from '../components/PeriodFilter.vue'
+import ExpenseForm from '../components/ExpenseForm.vue'
 
-import IconCategory from '../components/IconCategory.vue'
+import { CATEGORY_LABELS } from '../constants/categories.js'
+
+import {
+  addTransaction,
+  getTransactions,
+  getTransactionsByPeriod,
+} from '../api/transactions.js'
+
+const expenses = ref([])
+
+
+const isLoading = ref(true)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
+
+
+const periodStart = ref('')
+const periodEnd = ref('')
+const expenseFormRef = ref(null)
 
 
 
 
-// Статичный массив примеров расходов на первый спринт
-const expenses = ref([
-  {
-    id: 1,
-    title: 'Интернет',
-    category: 'Развлечения',
-    date: '2026-07-01',
-    amount: 1200,
-  },
-  {
-    id: 2,
-    title: 'Яндекс Плюс',
-    category: 'Развлечения',
-    date: '2026-07-02',
-    amount: 399,
-  },
-  {
-    id: 3,
-    title: 'Аптека Вита',
-    category: 'Другое',
-    date: '2026-07-03',
-    amount: 1540,
-  },
-  {
-    id: 4,
-    title: 'Купер Маркет',
-    category: 'Еда',
-    date: '2026-07-04',
-    amount: 4310,
-  },
-])
+function toExpenseRow(transaction) {
+  return {
+    id: transaction._id,
+    title: transaction.description,
+    category: CATEGORY_LABELS[transaction.category] ?? transaction.category,
+    date: transaction.date?.slice(0, 10) ?? '',
+    amount: transaction.sum,
+  }
+}
+async function loadTransactions() {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const transactions = 
+    periodStart.value && periodEnd.value
+    ? await getTransactionsByPeriod(periodStart.value, periodEnd.value)
+    : await getTransactions()
+    expenses.value = transactions.map(toExpenseRow)
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось загрузить расходы'
+  } finally {
+    isLoading.value = false
+  }
+}
 
-// Переменные полей формы (оставляем только для v-model)
-const description = ref('')
-const category = ref('Еда')
-const date = ref('')
-const amount = ref('')
+async function handleAddTransaction(payload) {
+  errorMessage.value = ''
+  isSubmitting.value = true
 
-// Переделываем массив в объекты с именами и путями к иконкам
-const categoriesList = [
-  { name: 'Еда',          icon: 'food' },
-  { name: 'Транспорт',    icon: 'transport' },
-  { name: 'Жильё',        icon: 'housing' },
-  { name: 'Развлечения',  icon: 'entertainment' },
-  { name: 'Образование',  icon: 'education' },
-  { name: 'Другое',       icon: 'other' },
-]
+  
+  try {
+    await addTransaction(payload)
+    expenseFormRef.value?.resetForm()
+    await loadTransactions()
+  } catch (error) {
+    errorMessage.value = error.message || 'Не удалось добавить расход'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+async function handlePeriodSearch({ start, end }) {
+  periodStart.value = start
+  periodEnd.value = end
+  await loadTransactions()
+  }
+  
+async function resetPeriod() {
+  periodStart.value = ''
+  periodEnd.value = ''
+  await loadTransactions()
+}
+onMounted(loadTransactions)
+
 
 </script>
 
@@ -66,77 +92,21 @@ const categoriesList = [
 
       <div class="content-layout">
         <div class="layout-left">
-          <ExpensesTable :expenses="expenses" />
+          <PeriodFilter
+            :is-loading="isLoading"
+            @search="handlePeriodSearch"
+            @reset="resetPeriod"
+          />
+          <ExpensesTable :expenses="expenses" />             
         </div>
+  
         <div class="layout-right">
-          <div class="form-container">
-            <h2 class="form-title">Новый расход</h2>
-            <form
-              class="expense-form"
-              novalidate
-              @submit.prevent
-            >
-              <div class="form-group">
-                <label for="expDesc">Описание</label>
-                <input
-                  id="expDesc"
-                  v-model.trim="description"
-                  type="text"
-                  placeholder="Введите описание"
-                >
-              </div>
-              <fieldset class="expense-form__categories">
-                <legend>Категория</legend>
-                <div class="categories-grid">
-                  <label
-                    v-for="item in categoriesList"
-                    :key="item.name"
-                    class="category-label"
-                    :class="{ 'category-label_active': category === item.name }"
-                  >
-                    <input
-                      v-model="category"
-                      type="radio"
-                      name="category"
-                      :value="item.name"
-                      class="hidden-radio"
-                    >
-                    <!-- Динамически выводим картинку-иконку -->
-                    <IconCategory :name="item.icon" class="category-icon" />
-                    <span>{{ item.name }}</span>
-                  </label>
-                </div>
-              </fieldset>
-              <div class="form-group">
-                <label for="expDate">Дата</label>
-                <input
-                  id="expDate"
-                  v-model="date"
-                  type="date"
-                >
-              </div>
-              <div class="form-group">
-                <label for="expAmount">Сумма</label>
-                <input
-                  id="expAmount"
-                  v-model="amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Введите сумму"
-                >
-              </div>
-              
-              <!-- Вывод ошибок и notice полностью удален -->
-
-              <button
-                type="submit"
-                class="submit-btn"
-              >
-                Добавить новый расход
-              </button>
-            </form>
-          </div>
+          <ExpenseForm
+            ref="expenseFormRef"
+            :is-submitting="isSubmitting"
+            :server-error="errorMessage"
+            @submit-expense="handleAddTransaction"
+          />
         </div>
       </div>
     </main>
@@ -176,126 +146,5 @@ const categoriesList = [
   width: 379px; 
   min-width: 360px;
 }
-.form-container {
-  background: #FFFFFF;
-  border: 1px solid #D4DBE5;
-  border-radius: 12px;
-  padding: 24px;
-}
-.form-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  text-align: left;
-}
-.expense-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  text-align: left;
-}
-.expense-form__categories {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.expense-form__categories legend {
-  margin-bottom: 8px;
-  padding: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: #000000;
-}
-.expense-form input[type='number'] {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  padding: 0 14px;
-  height: 44px;
-  border: 1px solid #F1EBFD;
-  background-color: #F1EBFD;
-  font-size: 12px;
-  border-radius: 8px;
-  font: inherit;
-  outline: none;
-}
-.expense-form input[type='number']:focus {
-  border-color: #793FED;
-}
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.form-group label {
-  font-size: 16px;
-  font-weight: 500;
-  color: #000000;
-}
-.form-group input[type="text"], .form-group input[type="date"] {
-  height: 44px;
-  padding: 0 14px;
-  border: 1px solid #D4DBE5;
-  border-radius: 8px;
-  outline: none;
-  font-size: 12px;
-  width: 100%;
-  background: transparent;
-}
-.form-group input:focus {
-  border-color: #793FED;
-}
-.categories-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.category-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px; /* Небольшой отступ между картинкой и текстом */
-  padding: 8px 14px;
-  border: 1px solid #D4DBE5;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  color: #000000;
-  transition: all 0.2s;
-}
-.category-label_active {
-  background-color: #F1EBFD;
-  color: #7334EA;
-  border-color: #F1EBFD;
-}
 
-/* Стили для иконки категории по ТЗ наставника */
-.category-icon {
-  width: 14px;
-  height: 14px;
-  color: currentColor;
-  transition: color 0.2s;
-  
-}
-
-.hidden-radio {
-  display: none;
-}
-.submit-btn {
-  height: 44px;
-  border: none;
-  border-radius: 6px;
-  background-color: #793FED;
-  color: #FFFFFF;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 10px;
-}
-.submit-btn:hover {
-  background-color: #7334EA;
-}
 </style>

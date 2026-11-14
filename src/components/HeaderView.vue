@@ -1,10 +1,12 @@
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
 import logo from '../assets/logo.svg'
+import { clearToken } from '../api/http.js'
 
 const router = useRouter()
 function handleLogout() {
-  router.push('/login')
+  clearToken()
+  router.replace('/login')
 }
 </script>
 <template>
