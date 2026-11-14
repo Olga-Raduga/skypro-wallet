@@ -41,7 +41,7 @@ function formatDateRu(value) {
   }).format(date)
 }
 
-// 12 прошедших месяцев + текущий (0) + 12 будущих
+// 36 прошедших месяцев + текущий (0) + 36 будущих
 const months = computed(() => {
   const offsets = Array.from({ length: 73 }, (_, i) => i - 36)
   return offsets.map((offset) => {

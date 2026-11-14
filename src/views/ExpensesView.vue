@@ -9,6 +9,7 @@ import { CATEGORY_LABELS } from '../constants/categories.js'
 
 import {
   addTransaction,
+  deleteTransaction,
   getTransactions,
   getTransactionsByPeriod,
 } from '../api/transactions.js'
@@ -19,6 +20,8 @@ const expenses = ref([])
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
+const deletingId = ref('')
+const deleteErrorMessage = ref('')
 
 
 const periodStart = ref('')
@@ -50,6 +53,24 @@ async function loadTransactions() {
     errorMessage.value = error.message || 'Не удалось загрузить расходы'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleDeleteExpense(id) {
+  if (deletingId.value) return
+  if (!window.confirm('Удалить этот расход?')) return
+  deletingId.value = String(id)
+  deleteErrorMessage.value = ''
+  try {
+    await deleteTransaction(id)
+    expenses.value = expenses.value.filter(
+      (expense) => String(expense.id) !== String(id)
+    )
+  } catch (error) {
+    deleteErrorMessage.value =
+      error.message || 'Не удалось удалить расход'
+  } finally {
+    deletingId.value = ''
   }
 }
 
@@ -97,7 +118,14 @@ onMounted(loadTransactions)
             @search="handlePeriodSearch"
             @reset="resetPeriod"
           />
-          <ExpensesTable :expenses="expenses" />             
+          <p v-if="deleteErrorMessage" class="page-error" role="alert">
+            {{ deleteErrorMessage }}
+          </p>
+          <ExpensesTable 
+            :expenses="expenses"
+            :deleting-id="deletingId"
+            @delete="handleDeleteExpense" 
+          />             
         </div>
   
         <div class="layout-right">

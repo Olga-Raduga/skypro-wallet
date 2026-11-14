@@ -5,7 +5,13 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  deletingId: {
+    type: String,
+    default: '',
+  },
 })
+
+const emit = defineEmits(['delete'])
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU')
 
@@ -32,7 +38,7 @@ function formatDate(value) {
       <tbody>
         <tr v-if="props.expenses.length === 0">
           <td
-            colspan="4"
+            colspan="5"
             class="empty-state"
           >
             Пока расходов нет
@@ -51,7 +57,13 @@ function formatDate(value) {
             {{ formatMoney(item.amount) }}
           </td>
           <td class="delete-cell">
-            <button type="button" class="delete-button" aria-label="Удалить расход">
+            <button 
+              type="button" 
+              class="delete-button" 
+              aria-label="Удалить расход"
+              :disabled="props.deletingId === String(item.id)"
+              @click="emit('delete', item.id)"
+            >
               <svg
                 viewBox="0 0 16 16"
                 width="14"
