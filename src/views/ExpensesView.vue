@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import HeaderView from '../components/HeaderView.vue'
 import ExpensesTable from '../components/ExpensesTable.vue'
+import { RouterLink } from 'vue-router'
 import PeriodFilter from '../components/PeriodFilter.vue'
 import ExpenseForm from '../components/ExpenseForm.vue'
 
@@ -109,7 +110,13 @@ onMounted(loadTransactions)
   <div class="page-wrapper">
     <HeaderView />
     <main class="main-content">
-      <h1 class="page-title">Мои расходы</h1>
+      <div class="page-heading">
+        <h1 class="page-title">Мои расходы</h1>
+        <RouterLink class="mobile-new-expense" to="/new-expense">
+          <span aria-hidden="true">＋</span>
+          Новый расход
+        </RouterLink>
+      </div>
 
       <div class="content-layout">
         <div class="layout-left">
@@ -144,7 +151,7 @@ onMounted(loadTransactions)
 <style scoped>
 .page-wrapper {
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background-color: #FAFAFA;
   display: flex;
   flex-direction: column;
@@ -152,27 +159,83 @@ onMounted(loadTransactions)
 .main-content {
   padding: 40px;
   flex-grow: 1;
+  width: min(1440px, 100%);
+  margin: 0 auto;
+}
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 .page-title {
-  margin: 0 0 24px;
+  margin: 0;
   color: #1f2430;
   font-size: 28px;
   font-weight: 600;
 }
+.page-error {
+  margin: 0 0 16px;
+  color: #d14343;
+  font-size: 13px;
+}
 .content-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
   gap: 30px;
-  align-items: flex-start;
-  max-width: 1440px;
-  margin: 0 auto;
+  align-items: start;
   width: 100%;
 }
-.layout-left {
-  width: 789px; 
-}
+.layout-left,
 .layout-right {
-  width: 379px; 
-  min-width: 360px;
+  min-width: 0;
+  width: auto; 
 }
+
+
+
+@media (max-width: 900px) {
+  .main-content {
+    padding: 32px 24px;
+  }
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .main-content {
+    padding: 24px 16px;
+  }
+  .page-title {
+    margin-bottom: 18px;
+    font-size: 23px;
+  }
+}
+.mobile-new-expense {
+  display: none;
+}
+@media (max-width: 480px) {
+  .page-heading {
+    margin-bottom: 18px;
+  }
+  .page-title {
+    font-size: 23px;
+  }
+  .mobile-new-expense {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #222;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .layout-right {
+    display: none;
+  }
+}
+
 
 </style>

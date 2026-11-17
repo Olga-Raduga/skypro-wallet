@@ -100,6 +100,7 @@ function resetForm() {
 }
 
 defineExpose({ resetForm })
+
 </script>
 
 <template>
@@ -354,5 +355,31 @@ defineExpose({ resetForm })
   color: #F25050;
   margin-left: 4px;
   font-weight: bold;
+}
+.expense-form input[type='number'] {
+  font-size: 12px;
+}
+.expense-form input[type='number']::placeholder {
+  color: #94a6be;
+  font-size: 12px;
+  opacity: 1;
+}
+@media (max-width: 480px) {
+  .form-container {
+    padding: 16px;
+  }
+  .categories-grid {
+    gap: 12px;
+  }
+  .category-label {
+    gap: 4px;
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+  .category-icon {
+    flex: 0 0 12px;
+    width: 12px;
+    height: 12px;
+  }
 }
 </style>

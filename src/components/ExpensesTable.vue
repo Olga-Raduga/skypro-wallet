@@ -1,4 +1,5 @@
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { formatMoney } from '../utils/format.js'
 const props = defineProps({
   expenses: {
@@ -12,6 +13,23 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['delete'])
+const selectedId = ref('')
+
+const selectedExpense = computed(() =>
+  props.expenses.find((item) => String(item.id) === selectedId.value) ?? null
+)
+function toggleSelected(id) {
+  const value = String(id)
+  selectedId.value = selectedId.value === value ? '' : value
+}
+watch(
+  () => props.expenses,
+  (items) => {
+    if (!items.some((item) => String(item.id) === selectedId.value)) {
+      selectedId.value = ''
+    }
+  }
+)
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU')
 
@@ -47,6 +65,11 @@ function formatDate(value) {
         <tr
           v-for="item in props.expenses"
           :key="item.id"
+          :class="{ 'expense-row--selected': selectedId === String(item.id) }"
+          :aria-selected="selectedId === String(item.id)"
+          tabindex="0"
+          @click="toggleSelected(item.id)"
+          @keydown.enter.prevent="toggleSelected(item.id)"
         >
           <td>{{ item.title }}</td>
           <td>
@@ -62,7 +85,7 @@ function formatDate(value) {
               class="delete-button" 
               aria-label="Удалить расход"
               :disabled="props.deletingId === String(item.id)"
-              @click="emit('delete', item.id)"
+              @click.stop="emit('delete', item.id)"
             >
               <svg
                 viewBox="0 0 16 16"
@@ -85,6 +108,16 @@ function formatDate(value) {
         </tr>
       </tbody>
     </table>
+
+    <button
+      v-if="selectedExpense"
+      type="button"
+      class="mobile-delete-button"
+      :disabled="props.deletingId === selectedId"
+      @click="emit('delete', selectedExpense.id)"
+    >
+      Удалить расход
+    </button>
   </div>
 </template>
 
@@ -143,5 +176,85 @@ function formatDate(value) {
 .delete-button:hover {
   background: transparent;
   color: #7334ea;
+}
+.delete-heading {
+  width: 32px;
+}
+.expense-row--selected {
+  background: #f1ebfd;
+}
+.expense-row--selected td {
+  color: #7334ea;
+}
+.mobile-delete-button {
+  display: none;
+}
+@media (max-width: 480px) {
+  .table-container {
+    padding: 16px;
+    overflow-x: auto;
+  }
+  .table-title {
+    margin-bottom: 14px;
+    font-size: 20px;
+  }
+  .expenses-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .expenses-table th,
+  .expenses-table td {
+    padding: 10px 3px;
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .expenses-table th:nth-child(1),
+  .expenses-table td:nth-child(1) {
+    width: 25%;
+  }
+  .expenses-table th:nth-child(2),
+  .expenses-table td:nth-child(2) {
+    width: 24%;
+  }
+  .expenses-table th:nth-child(3),
+  .expenses-table td:nth-child(3) {
+    width: 29%;
+  }
+  .expenses-table th:nth-child(4),
+  .expenses-table td:nth-child(4) {
+    width: 22%;
+    text-align: right;
+  }
+  .expenses-table th.delete-heading,
+  .expenses-table td.delete-cell {
+    display: none;
+  }
+  .expenses-table td:nth-child(2) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .category-tag {
+    padding: 0;
+  }
+  .mobile-delete-button {
+    display: block;
+    width: 100%;
+    height: 44px;
+    margin-top: 16px;
+    border: 0;
+    border-radius: 6px;
+    background: #793fed;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .mobile-delete-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
 }
 </style>
