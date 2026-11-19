@@ -197,6 +197,7 @@ function formatDate(value) {
   .table-title {
     margin-bottom: 14px;
     font-size: 20px;
+    display: none;
   }
   .expenses-table {
     width: 100%;
@@ -222,6 +223,7 @@ function formatDate(value) {
   .expenses-table th:nth-child(3),
   .expenses-table td:nth-child(3) {
     width: 29%;
+    text-align: right;
   }
   .expenses-table th:nth-child(4),
   .expenses-table td:nth-child(4) {
@@ -238,6 +240,7 @@ function formatDate(value) {
   }
   .category-tag {
     padding: 0;
+    font-size: 10px;
   }
   .mobile-delete-button {
     display: block;
@@ -249,7 +252,7 @@ function formatDate(value) {
     background: #793fed;
     color: #fff;
     font: inherit;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
   }
   .mobile-delete-button:disabled {

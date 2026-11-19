@@ -158,4 +158,18 @@ function handleReset() {
   font-size: 12px;
   text-align: left;
 }
+@media (max-width: 480px){
+  .period-filter__field input {
+  height: 30px;
+  font-size: 10px;
+}
+  .period-btn {
+  height: 30px;
+  font-size: 10px;
+}
+  .period-btn_submit {
+  font-size: 10px;
+}
+
+}
 </style>

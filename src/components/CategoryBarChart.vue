@@ -57,8 +57,9 @@ const chartItems = computed(() => {
 <template>
   <article class="panel chart-panel">
     <header class="panel-header">
-      <div>
-        <h2 class="panel-title">Расходы по категориям</h2>
+      <div class="chart-heading">
+        <h2 class="panel-title panel-title--desktop">Расходы по категориям</h2>
+        <h2 class="panel-title panel-title--mobile">Анализ расходов</h2>
         <p class="panel-subtitle">{{ periodLabel }}</p>
       </div>
       <div class="total-block">
@@ -67,9 +68,15 @@ const chartItems = computed(() => {
       </div>
     </header>
 
-    <p v-if="errorMessage" role="alert">{{ errorMessage }}</p>
-    <p v-else-if="isLoading">Загружаем транзакции…</p>
-    <p v-else-if="transactions.length === 0">За этот период расходов нет</p>
+    <p v-if="errorMessage" class="chart-message" role="alert">
+      {{ errorMessage }}
+    </p>
+    <p v-else-if="isLoading" class="chart-message">
+      Загружаем транзакции…
+    </p>
+    <p v-else-if="transactions.length === 0" class="chart-message">
+      За этот период расходов нет
+    </p>
 
     <div class="chart-scroll">
       <div
@@ -101,6 +108,8 @@ const chartItems = computed(() => {
 
 <style scoped>
 .panel {
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
   padding: 24px;
   border: 1px solid #e2e6ee;
@@ -115,16 +124,21 @@ const chartItems = computed(() => {
   gap: 16px;
   margin-bottom: 28px;
 }
+.chart-heading {
+  min-width: 0;
+}
 .panel-title {
   margin: 0;
   color: #1f2430;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .panel-subtitle {
+  max-width: 100%;
   margin: 8px 0 0;
   color: #8993a5;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .total-block {
   display: flex;
@@ -139,13 +153,24 @@ const chartItems = computed(() => {
 }
 .total-block strong {
   color: #1f2430;
-  font-size: 16px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+.chart-message {
+  margin: 0 0 16px;
+  color: #737e91;
+  font-size: 13px;
 }
 .chart-scroll {
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
 }
 .bar-chart {
   display: grid;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   grid-template-columns: repeat(6, minmax(64px, 1fr));
   gap: 12px;
 }
@@ -173,7 +198,7 @@ const chartItems = computed(() => {
   width: min(56px, 68%);
   height: var(--bar-height);
   transform: translateX(-50%);
-  border-radius: 8px 8px 2px 2px;
+  border-radius: 6px 6px 2px 2px;
   background: var(--bar-color);
 }
 .bar-value {
@@ -181,9 +206,13 @@ const chartItems = computed(() => {
   z-index: 2;
   bottom: calc(var(--bar-height) + 8px);
   left: 50%;
+  width: max-content;
+  max-width: 100%;
   color: #50596b;
   font-size: 11px;
-  white-space: nowrap;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
   transform: translateX(-50%);
 }
 .chart-label {
@@ -195,12 +224,80 @@ const chartItems = computed(() => {
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+.panel-title--mobile {
+  display: none; /* на десктопе мобильный заголовок скрыт */
+}
 @media (max-width: 560px) {
   .panel {
-    padding: 18px;
+    padding: 16px;
+    background: #f7f8fc;
+    border: none;
   }
   .panel-header {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
   }
+  .panel-title--desktop {
+    display: none;
+  }
+
+  .panel-title--mobile {
+    display: block;
+  }
+  .panel-title {
+    font-size: 22px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .chart-heading .panel-title--mobile {
+    margin-bottom: 16px;
+  }
+  .panel-subtitle {
+    margin-top: 0; 
+  }
+  .total-block {
+    align-items: flex-start;
+    white-space: normal;
+  }
+  .total-block__label {
+  display: none;
+}
+  .total-block strong {
+    font-size: 20px;
+  }
+  .chart-scroll {
+    width: 100%;
+    min-width: 0;
+  }
+  .bar-chart {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .chart-column {
+    min-width: 0;
+  }
+  .bar {
+  width: min(44px, 80%);
+}
+  .bar-stage {
+    height: 190px;
+  }
+  
+  .bar-value {
+    max-width: 100%;
+    font-size: 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .chart-label {
+    font-size: 8px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  
 }
 </style>

@@ -192,6 +192,7 @@ function handleLogout() {
     list-style: none;
     color: #7334ea;
     font-size: 12px;
+    font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
   }
@@ -216,19 +217,23 @@ function handleLogout() {
     padding: 10px 12px;
     border-radius: 6px;
     color: #222;
-    font-size: 13px;
+    font-size: 10px;
+    font-weight: 400;
     text-decoration: none;
     white-space: nowrap;
   }
   .mobile-nav__link_active {
     background: #f1ebfd;
     color: #7334ea;
+    font-size: 10px;
+    font-weight: 400;
   }
   .header__logout-btn {
     grid-column: 3;
     grid-row: 1;
     padding: 6px 0;
     font-size: 12px;
+    font-weight: 600;
   }
 }
 </style>

@@ -173,7 +173,7 @@ onMounted(loadTransactions)
   margin: 0;
   color: #1f2430;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .page-error {
   margin: 0 0 16px;
@@ -221,14 +221,15 @@ onMounted(loadTransactions)
     margin-bottom: 18px;
   }
   .page-title {
-    font-size: 23px;
+    font-size: 24px;
   }
   .mobile-new-expense {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     color: #222;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
   }

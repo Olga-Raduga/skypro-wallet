@@ -48,9 +48,8 @@ async function handleAddTransaction(payload) {
 }
 .back-to-expenses {
   display: inline-block;
-  margin-bottom: 16px;
-  color: #7334ea;
-  font-size: 13px;
+  color: #999999;
+  font-size: 12px;
   text-decoration: none;
 }
 </style>
