@@ -365,7 +365,7 @@ onMounted(async () => {
     background: transparent;
     color: #793fed;
     font: inherit;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
   }
   .calendar-scroll {
