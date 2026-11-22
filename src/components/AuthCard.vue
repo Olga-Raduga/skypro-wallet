@@ -1,4 +1,5 @@
 <script setup>
+import logo from '../assets/logo.svg'
 defineProps({
   title: { type: String, required: true },
 })
@@ -6,6 +7,14 @@ defineProps({
 
 <template>
   <div class="auth-page">
+    <header class="auth-brand">
+      <img
+        class="auth-brand__logo"
+        :src="logo"
+        alt="Skypro.Wallet"
+      >
+    </header>
+
     <section class="auth-card">
       <h1>{{ title }}</h1>
 

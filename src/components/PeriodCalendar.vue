@@ -349,15 +349,15 @@ onMounted(async () => {
     font-size: 22px;
   }
   .panel-header {
-    flex-direction: column;   /* колонкой */
-    align-items: flex-start;  /* всё по левому краю */
-    gap: 4px;                 /* маленький зазор между ссылкой и заголовком */
-    margin-bottom: 16px;      /* отступ до календаря */
+    flex-direction: column;   
+    align-items: flex-start;  
+    gap: 4px;                
+    margin-bottom: 16px;      
   }
 
   .calendar-analysis-button {
-    order: -1;                /* ⭐ кнопка "Анализ" встаёт сверху */
-    display: inline-flex;     /* показываем (у тебя она была display: none) */
+    order: -1;               
+    display: inline-flex;    
     align-items: center;
     padding: 0;
     margin: 0;
