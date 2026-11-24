@@ -100,6 +100,7 @@ function resetForm() {
 }
 
 defineExpose({ resetForm })
+
 </script>
 
 <template>
@@ -214,13 +215,12 @@ defineExpose({ resetForm })
 <style scoped>
 .form-container {
   background: #FFFFFF;
-  border: 1px solid #D4DBE5;
   border-radius: 12px;
   padding: 24px;
 }
 .form-title {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 20px;
   text-align: left;
 }
@@ -240,7 +240,7 @@ defineExpose({ resetForm })
   margin-bottom: 8px;
   padding: 0;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000000;
 }
 .expense-form input[type='number'] {
@@ -270,7 +270,7 @@ defineExpose({ resetForm })
 }
 .form-group label {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000000;
 }
 .form-group input[type="text"],
@@ -327,7 +327,7 @@ defineExpose({ resetForm })
   background-color: #793FED;
   color: #FFFFFF;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 10px;
@@ -354,5 +354,41 @@ defineExpose({ resetForm })
   color: #F25050;
   margin-left: 4px;
   font-weight: bold;
+}
+.expense-form input[type='number'] {
+  font-size: 12px;
+}
+.expense-form input[type='number']::placeholder {
+  color: #94a6be;
+  font-size: 12px;
+  opacity: 1;
+}
+@media (max-width: 480px) {
+.form-container {
+  padding: 16px;
+}
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  height: 39px;
+}
+.categories-grid {
+  gap: 12px;
+}
+.category-label {
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.category-icon {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+}
+.submit-btn {
+  height: 39px;
+}
+.expense-form input[type='number'] {
+  height: 39px;
+}
 }
 </style>

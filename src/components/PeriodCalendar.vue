@@ -16,7 +16,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['select-date', 'reset'])
+const emit = defineEmits(['select-date', 'reset', 'show-analysis'])
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const today = new Date()
@@ -41,7 +41,7 @@ function formatDateRu(value) {
   }).format(date)
 }
 
-// 12 прошедших месяцев + текущий (0) + 12 будущих
+// 36 прошедших месяцев + текущий (0) + 36 будущих
 const months = computed(() => {
   const offsets = Array.from({ length: 73 }, (_, i) => i - 36)
   return offsets.map((offset) => {
@@ -111,9 +111,17 @@ onMounted(async () => {
 <template>
   <article class="panel calendar-panel">
     <header class="panel-header">
-      <div>
-        <h2 class="panel-title">Период</h2>
+      <div class="calendar-heading">
+        <h2 class="panel-title panel-title--desktop">Период</h2>
+        <h2 class="panel-title panel-title--mobile">Выбор периода</h2>
       </div>
+      <button
+        type="button"
+        class="calendar-analysis-button"
+        @click="emit('show-analysis')"
+      >
+        ← Анализ
+      </button>
     </header>
 
     <div class="calendar-weekdays">
@@ -195,7 +203,10 @@ onMounted(async () => {
   margin: 0;
   color: #1f2430;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+}
+.panel-title--mobile {
+  display: none;
 }
 .calendar-weekdays {
   display: grid;
@@ -320,9 +331,64 @@ onMounted(async () => {
   cursor: wait;
   opacity: 0.6;
 }
+.calendar-analysis-button {
+  display: none;
+}
 @media (max-width: 560px) {
   .panel {
     padding: 18px;
+    background: #f7f8fc;
+    border: none;
+  }
+  .panel-title--desktop {
+    display: none;
+  }
+
+  .panel-title--mobile {
+    display: block;
+    font-size: 22px;
+  }
+  .panel-header {
+    flex-direction: column;   
+    align-items: flex-start;  
+    gap: 4px;                
+    margin-bottom: 16px;      
+  }
+
+  .calendar-analysis-button {
+    order: -1;               
+    display: inline-flex;    
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: #793fed;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .calendar-scroll {
+    max-height: 380px;
+  } 
+  .calendar-analysis-button {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    padding: 4px 0;
+    background: transparent;
+    color: #793fed;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .calendar-footer {
+  display: none;
+}
+}
+@media (max-width: 360px) {
+  .calendar-scroll {
+    max-height: 340px;
   }
 }
 </style>

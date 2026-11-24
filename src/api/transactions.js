@@ -22,6 +22,11 @@ export function updateTransaction(id, transaction) {
     body: makePayload(transaction),
   })
 }
+export function deleteTransaction(id) {
+  return apiRequest(`/transactions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
 function formatDateForApi(value) {
   const [year, month, day] = value.split('-')
   if (!year || !month || !day) {
